@@ -147,5 +147,5 @@ comunicacao/
 
 ### Link da apresentação
 - **GitHub Pages** (grátis em repositório público): gera um link que qualquer pessoa abre, no formato `https://<usuário>.github.io/<repositório>/`.
-- Atenção: pelo modo simples, o Pages só publica a raiz do repositório ou uma pasta chamada `docs/`. Para publicar `apresentacao/`, é preciso um pequeno *workflow* do GitHub Actions (posso criar) ou renomear a pasta para `docs/`.
+- Atenção: pelo modo simples, o Pages só publica a raiz do repositório ou uma pasta chamada `docs/`. Para publicar `apresentacao/`, é preciso um pequeno *workflow* do GitHub Actions (o Claude pode criar) ou renomear a pasta para `docs/`.
 
