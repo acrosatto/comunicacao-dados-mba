@@ -73,11 +73,11 @@ Projeto criado e apresentado por Ana, Caio e Paulo
 | Pessoa | Papel | Responsabilidades |
 |---|---|---|
 | **A – Análise** | Responsável pelos números | Limpeza, modelo, validação e principais escolhas técnicas. Entrega os resultados prontos e escreve o Anexo técnico. Responde às perguntas técnicas na apresentação. |
-| **B – Slides** | Responsável pelos slides | Gera os slides com o Claude a partir dos resultados de A. Garante identidade visual única, gráficos limpos e uma mensagem por slide. |
+| **B – Slides** | Responsável pelos slides | Gera os slides a partir dos resultados de A. Garante identidade visual única, gráficos limpos e uma mensagem por slide. |
 | **C – Apresentador** | Responsável pela história | Define o público e a decisão no início, escreve o roteiro de fala, revisa os slides como público não técnico ("entendi isso em 10 segundos?") e apresenta. |
 
 ### Modelo de trabalho: 1 responsável por etapa + 2 revisores
-- Cada etapa tem um responsável que produz (com o Claude) e os outros dois revisam e validam as decisões antes de seguir para a próxima.
+- Cada etapa tem um responsável que produz e os outros dois revisam e validam as decisões antes de seguir para a próxima.
 - Todos têm acesso a tudo (script, slides, roteiro), para que qualquer um consiga responder perguntas na apresentação.
 
 | Etapa | Responsável | Revisores | O que os revisores validam |
