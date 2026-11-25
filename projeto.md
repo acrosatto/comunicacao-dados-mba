@@ -149,9 +149,3 @@ comunicacao/
 - **GitHub Pages** (grátis em repositório público): gera um link que qualquer pessoa abre, no formato `https://<usuário>.github.io/<repositório>/`.
 - Atenção: pelo modo simples, o Pages só publica a raiz do repositório ou uma pasta chamada `docs/`. Para publicar `apresentacao/`, é preciso um pequeno *workflow* do GitHub Actions (posso criar) ou renomear a pasta para `docs/`.
 
-### Pendências
-- [ ] Confirmar com o professor se a apresentação pode ser em HTML ou se precisa ser PowerPoint ou PDF (o reveal.js exporta PDF, mas não .pptx).
-- [ ] Confirmar com Caio e Paulo se concordam em ter o nome num repositório público.
-- [ ] Cada integrante ativar o e-mail privado no GitHub (*Settings → Emails → Keep my email addresses private*), para o e-mail pessoal não aparecer nos commits.
-- [ ] Criar o repositório público e adicionar os colegas como colaboradores.
-- [ ] Ativar o GitHub Pages para a apresentação (via Actions ou pasta `docs/`).
