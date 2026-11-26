@@ -54,7 +54,30 @@ Livre.
 
 ## 2. Base de dados
 
-**Hotel Booking Demand, com regressão logística**, escolhida no kickoff (26/11). Roteiro dos slides, motivos da escolha e limitações em [base_hotel_booking.md](base_hotel_booking.md); variáveis no [dicionário de dados](dados/dicionario_hotel_bookings.md).
+**Hotel Booking Demand, com regressão logística**, escolhida no kickoff (26/11). Variáveis, escopo e qualidade dos dados no [dicionário de dados](dados/dicionario_hotel_bookings.md); regras da análise no [CLAUDE.md](CLAUDE.md).
+
+- **Fonte (citar no anexo):** Antonio, Almeida & Nunes (2019), *Hotel booking demand datasets*, Data in Brief. Versão em CSV no TidyTuesday (11/02/2020) e no Kaggle.
+
+### Por que esta base
+Escolhida entre Hotel Booking (regressão logística) e Bike Sharing (regressão linear). Wholesale Customers (clusterização) foi descartada antes: só 8 variáveis, e os clusters tendem a repetir a variável `Channel`.
+
+- **Decisão clara e com dinheiro envolvido:** cancelamentos geram quartos vazios e receita perdida.
+- **Alvo naturalmente sim/não:** a reserva foi cancelada ou não, o que encaixa na logística sem adaptar o problema.
+- **Resultado fácil de comunicar:** "esta reserva tem 70% de chance de cancelar" funciona para o público não técnico; razões de chances, AUC e limiar interessam ao técnico.
+- **Modelo mais fácil de defender:** cada reserva é independente, sem os problemas de série temporal da Bike Sharing (resíduos autocorrelacionados, alvo de contagem, crescimento entre os anos).
+- **Com só 4 slides:** a decisão cabe numa frase e a evidência leva direto à ação.
+
+### Roteiro dos slides
+
+| Slide | Conteúdo |
+|---|---|
+| 1. Contexto e decisão | Taxa de cancelamento e impacto em receita. Decisão em discussão: em quais reservas pedir depósito, ligar para confirmar ou aceitar overbooking. |
+| 2. Como funciona | O modelo estima a probabilidade de cancelamento com informações disponíveis **no momento da reserva**. Exemplo: "reserva feita mais de 180 dias antes, via agência online, sem pedidos especiais → __% de risco". |
+| 3. Evidências | Título com a conclusão (por exemplo: "Reservas feitas com meses de antecedência concentram os cancelamentos"). Até três resultados: (1) principais fatores, (2) curva de ganho ("os 20% de maior risco concentram __% dos cancelamentos"), (3) comparação do modelo com uma regra simples que o hotel poderia usar hoje. Limitações. |
+| 4. Recomendação | Score de risco no momento da reserva; para as reservas de alto risco, pedir depósito ou ligar para confirmar. Próximo passo: piloto A/B de 3 meses em um dos hotéis, medindo cancelamentos e receita. |
+| Anexo técnico | Escopo, variáveis excluídas por vazamento, divisão temporal, AUC, matriz de confusão, justificativa do limiar (custo de ligar para quem não cancelaria × deixar passar um cancelamento), tabela de razões de chances. |
+
+Os `__%` são preenchidos com saídas reais dos notebooks.
 
 ---
 
@@ -119,7 +142,6 @@ comunicacao/
 ├── README.md                # resumo do projeto e do fluxo de revisão
 ├── CLAUDE.md                # contexto e regras para agentes de IA
 ├── projeto.md               # este arquivo
-├── base_hotel_booking.md    # roteiro dos slides, escolhas técnicas e limitações
 ├── dados/                   # base original (CSV) e dicionário de dados
 ├── analise/                 # notebooks da análise, numerados (01_, 02_...)
 ├── apresentacao/            # apresentação em um único arquivo HTML

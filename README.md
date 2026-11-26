@@ -6,7 +6,7 @@ MBA em Ciência de Dados · **Ana, Caio e Paulo** · Entrega: **terça, 08/12**
 
 ## Status
 
-- **Base:** [Hotel Booking Demand](base_hotel_booking.md), com regressão logística (escolhida no kickoff, 26/11).
+- **Base:** Hotel Booking Demand, com regressão logística (escolhida no kickoff, 26/11).
 - **Equipe:** os três trabalham em todas as etapas.
 - **Próximo marco:** modelo decidido e resultados congelados na terça, 01/12.
 
@@ -14,9 +14,8 @@ MBA em Ciência de Dados · **Ana, Caio e Paulo** · Entrega: **terça, 08/12**
 
 | Arquivo ou pasta | Conteúdo |
 |---|---|
-| [projeto.md](projeto.md) | Enunciado, divisão de tarefas, fluxo de revisão, cronograma e pendências |
+| [projeto.md](projeto.md) | Enunciado, base escolhida e motivos, roteiro dos slides, forma de trabalho, cronograma e modelo da apresentação |
 | [CLAUDE.md](CLAUDE.md) | Contexto e regras do projeto para agentes de IA que trabalham no repositório |
-| [base_hotel_booking.md](base_hotel_booking.md) | Motivos da escolha da base, roteiro dos slides, escolhas técnicas e limitações |
 | `dados/` | Base escolhida (CSV) e [dicionário de dados do Hotel Booking](dados/dicionario_hotel_bookings.md) |
 | `analise/` | Notebooks da análise e gráficos. [01_avaliacao_variaveis_hotel.ipynb](analise/01_avaliacao_variaveis_hotel.ipynb): avaliação das variáveis, vazamento e escopo |
 | `apresentacao/` | Apresentação em um único arquivo HTML, com a fala nas notas do apresentador |

@@ -12,14 +12,13 @@ Apresentação dos resultados de uma regressão logística que apoia uma decisã
 - **Público:** Diretoria de Receita (não técnica) e analista de BI (técnico).
 - **Formato:** até 8 minutos; até 4 slides principais e 1 ou 2 de anexo técnico. Roteiro: contexto e decisão → como a análise funciona → evidências e interpretação → recomendação e próximos passos. A recomendação precisa ser clara.
 
-O `projeto.md` é a referência para enunciado, papéis, fluxo de revisão, cronograma e formato da apresentação. Se uma tarefa contradisser o `projeto.md`, avise quem pediu antes de seguir.
+O `projeto.md` é a referência para enunciado, motivos da escolha da base, roteiro dos slides, forma de trabalho, cronograma e formato da apresentação. Se uma tarefa contradisser o `projeto.md`, avise quem pediu antes de seguir.
 
 ## Onde está cada coisa
 
 | Caminho | Conteúdo |
 | --- | --- |
-| `projeto.md` | Enunciado, papéis, fluxo de revisão, cronograma e modelo da apresentação |
-| `base_hotel_booking.md` | Motivos da escolha da base, roteiro dos slides, escolhas técnicas e limitações |
+| `projeto.md` | Enunciado, base escolhida e motivos, roteiro dos slides, forma de trabalho, cronograma e modelo da apresentação |
 | `dados/hotel_bookings.csv` | Base original. Não editar: toda transformação fica nos notebooks |
 | `dados/dicionario_hotel_bookings.md` | Dicionário de dados: tipo, quando se sabe e uso proposto de cada variável |
 | `analise/01_avaliacao_variaveis_hotel.ipynb` | Avaliação das variáveis: vazamento, escopo, linearidade no logito e V de Cramér |
