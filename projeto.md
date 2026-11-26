@@ -54,12 +54,12 @@ Livre.
 
 ## 2. Base de dados
 
-As opções estão detalhadas em arquivos separados. A escolha final será feita no kickoff (26/11).
+As opções estão detalhadas em arquivos separados. A base foi escolhida no kickoff (26/11): Hotel Booking Demand.
 
 | Base | Técnica | Status |
 |---|---|---|
-| [Hotel Booking Demand](escolha_base/base_hotel_booking.md) | Regressão logística | ✅ Recomendada |
-| [Bike Sharing](escolha_base/base_bike_sharing.md) | Regressão linear | Alternativa |
+| [Hotel Booking Demand](escolha_base/base_hotel_booking.md) | Regressão logística | ✅ Escolhida |
+| [Bike Sharing](escolha_base/base_bike_sharing.md) | Regressão linear | Não escolhida |
 | [Wholesale Customers](https://archive.ics.uci.edu/dataset/292/wholesale+customers) | Clusterização | ❌ Descartada: só 8 variáveis, e os clusters tendem a repetir a variável `Channel` |
 
 ---

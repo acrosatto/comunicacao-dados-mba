@@ -6,7 +6,7 @@ MBA em Ciência de Dados · **Ana, Caio e Paulo** · Entrega: **terça, 08/12**
 
 ## Status
 
-- **Base:** a definir no kickoff (26/11). Recomendada: [Hotel Booking Demand](escolha_base/base_hotel_booking.md) com regressão logística. Alternativa: [Bike Sharing](escolha_base/base_bike_sharing.md) com regressão linear.
+- **Base:** [Hotel Booking Demand](escolha_base/base_hotel_booking.md), com regressão logística (escolhida no kickoff, 26/11).
 - **Papéis:** a definir (A – Análise, B – Slides, C – Apresentador).
 - **Próximo marco:** kickoff na quinta, 26/11.
 
@@ -15,10 +15,12 @@ MBA em Ciência de Dados · **Ana, Caio e Paulo** · Entrega: **terça, 08/12**
 | Arquivo ou pasta | Conteúdo |
 |---|---|
 | [projeto.md](projeto.md) | Enunciado, divisão de tarefas, fluxo de revisão, cronograma e pendências |
+| [CLAUDE.md](CLAUDE.md) | Contexto e regras do projeto para agentes de IA que trabalham no repositório |
 | [escolha_base/](escolha_base/) | Opções de base avaliadas: [Hotel Booking](escolha_base/base_hotel_booking.md) e [Bike Sharing](escolha_base/base_bike_sharing.md), cada uma com decisão, roteiro dos slides, escolhas técnicas e limitações |
 | `dados/` | Base escolhida (CSV) e [dicionário de dados do Hotel Booking](dados/dicionario_hotel_bookings.md) |
 | `analise/` | Notebooks da análise e gráficos. [01_avaliacao_variaveis_hotel.ipynb](analise/01_avaliacao_variaveis_hotel.ipynb): avaliação das variáveis, vazamento e escopo |
 | `apresentacao/` | Apresentação em um único arquivo HTML, com a fala nas notas do apresentador |
+| [apresentacao_html/](apresentacao_html/para_quem_vale_ligar.html) | Modelo de referência para a nossa apresentação: o pitch do Hackathon Terra Signal. Abra no navegador; a tecla `N` mostra as notas |
 
 ## Como colaboramos
 
