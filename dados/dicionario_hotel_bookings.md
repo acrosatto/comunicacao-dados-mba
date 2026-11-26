@@ -37,8 +37,8 @@ O modelo usa só as reservas **sem depósito** (`deposit_type = No Deposit`): 10
 | `arrival_date_month` | Mês da chegada | categórica | January a December | na reserva | entra, em três temporadas: jul–ago, abr–jun e set–mar |
 | `arrival_date_week_number` | Semana do ano da chegada | numérica | 1 a 53 | na reserva | sai: repete o mês |
 | `arrival_date_day_of_month` | Dia do mês da chegada | numérica | 1 a 31 | na reserva | sai: sem relação com o cancelamento |
-| `stays_in_weekend_nights` | Noites de sábado ou domingo | contagem | 0 a 19 | pode mudar até a chegada | testar, somada às noites de semana |
-| `stays_in_week_nights` | Noites de segunda a sexta | contagem | 0 a 50 | pode mudar até a chegada | testar, somada às noites de fim de semana |
+| `stays_in_weekend_nights` | Noites de sábado ou domingo | contagem | 0 a 19 | pode mudar até a chegada | testar, somada às noites de semana (ver `faixa_noites`) |
+| `stays_in_week_nights` | Noites de segunda a sexta | contagem | 0 a 50 | pode mudar até a chegada | testar, somada às noites de fim de semana (ver `faixa_noites`) |
 | `adults` | Adultos | contagem | 0 a 55 (403 reservas com 0) | na reserva | testar: sozinho × acompanhado |
 | `children` | Crianças | contagem | 0 a 10 (4 vazios) | na reserva | testar: com × sem criança |
 | `babies` | Bebês | contagem | 0 a 10 (99% zero) | na reserva | sai: quase sempre zero |
@@ -59,11 +59,26 @@ O modelo usa só as reservas **sem depósito** (`deposit_type = No Deposit`): 10
 | `customer_type` | Tipo de cliente | categórica | Transient (avulso), Transient-Party (avulso ligado a outra reserva), Contract (contrato), Group | na reserva | entra |
 | `adr` | Diária média: soma das diárias dividida pelo número de noites | numérica | −6,38 a 5.400; mediana de 94,58 | na reserva | entra como número |
 | `required_car_parking_spaces` | Vagas de garagem pedidas | contagem | 0 a 8 | suspeita | sai: nenhuma das 7.416 reservas com vaga foi cancelada |
-| `total_of_special_requests` | Pedidos especiais (cama de casal, andar alto etc.) | contagem | 0 a 5 | pode mudar até a chegada | testar: fez pedido × não fez |
+| `total_of_special_requests` | Pedidos especiais (cama de casal, andar alto etc.) | contagem | 0 a 5 | na reserva ou nos primeiros dias (sem sinal de acúmulo até a chegada) | testar: fez pedido × não fez. Se entrar, o score é calculado alguns dias depois da reserva |
 | `reservation_status` | Último status da reserva | categórica | Check-Out, Canceled, No-Show | só no fim | sai: é a própria resposta |
 | `reservation_status_date` | Data do último status | data | 17/10/2014 a 14/09/2017 | só no fim | sai: para quem cancelou, é a data do cancelamento |
 
 **Resumo:** das 31 variáveis explicativas, 7 entram, 7 vão para teste (as duas de noites viram uma só), 6 saem por vazamento ou suspeita, 1 define o escopo e 10 saem por serem fracas, redundantes ou sem uso.
+
+## Variáveis derivadas avaliadas
+
+Criadas a partir de colunas conhecidas na hora da reserva. As evidências estão no notebook [03_relacoes_entre_variaveis.ipynb](../analise/03_relacoes_entre_variaveis.ipynb).
+
+| Variável | Como é feita | Uso proposto |
+| --- | --- | --- |
+| `faixa_noites` | soma das noites de fim de semana e de semana, em faixas: até 1 (juntando as 715 reservas com zero noites), 2–3, 4–7 e mais de 7 | testar: escada de 20% (1 noite) a 35% (mais de 7) |
+| `dia_chegada` | dia da semana da chegada | sai: fraca |
+| `dia_reserva` | dia da semana em que a reserva foi feita (chegada menos antecedência) | sai: fraca |
+| `so_fim_de_semana` | nenhuma noite de semana e ao menos uma de fim de semana | sai: fraca e contida no total de noites |
+| `preco_relativo` | diária dividida pela mediana do mesmo hotel, mês e tipo de quarto | sai: separa menos que a diária e muda de sentido conforme o segmento |
+| agência online × antecedência | termo de interação | testar: na agência online, a taxa sobe de 9% para 54% com a antecedência; na operadora tradicional, de 11% para 20% |
+
+**Referências das variáveis categóricas no modelo:** a categoria mais frequente (ou a mais natural para o negócio), juntando as categorias pequenas antes de criar as dummies. Com referências pequenas, o VIF fica artificialmente alto.
 
 ## Qualidade dos dados
 
