@@ -24,6 +24,7 @@ O `projeto.md` é a referência para enunciado, papéis, fluxo de revisão, cron
 | `dados/dicionario_hotel_bookings.md` | Dicionário de dados: tipo, quando se sabe e uso proposto de cada variável |
 | `analise/01_avaliacao_variaveis_hotel.ipynb` | Avaliação das variáveis: vazamento, escopo, linearidade no logito e V de Cramér |
 | `apresentacao/` | A apresentação, num único arquivo HTML |
+| `apresentacao_html/para_quem_vale_ligar.html` | Modelo de referência da apresentação (estrutura, bloco JSON, gráficos em SVG e notas). Só consulta: não editar |
 
 ## Regras da análise
 
@@ -57,5 +58,5 @@ Jupyter, pelo Anaconda. Os notebooks ficam em `analise/`, numerados na ordem de 
 
 ## Apresentação
 
-- Um único arquivo HTML em `apresentacao/`, sem framework, no modelo descrito na seção 5 do `projeto.md`: cada slide num `<section class="slide">`, números num bloco JSON embutido, gráficos em SVG lendo desse bloco e notas com `data-who` e `data-time` em todos os slides.
+- Um único arquivo HTML em `apresentacao/`, sem framework, no modelo descrito na seção 5 do `projeto.md` e exemplificado em `apresentacao_html/para_quem_vale_ligar.html`: cada slide num `<section class="slide">`, números num bloco JSON embutido, gráficos em SVG lendo desse bloco e notas com `data-who` e `data-time` em todos os slides.
 - Depois de 01/12, qualquer ajuste de número é feito só no bloco JSON.

@@ -20,6 +20,7 @@ MBA em Ciência de Dados · **Ana, Caio e Paulo** · Entrega: **terça, 08/12**
 | `dados/` | Base escolhida (CSV) e [dicionário de dados do Hotel Booking](dados/dicionario_hotel_bookings.md) |
 | `analise/` | Notebooks da análise e gráficos. [01_avaliacao_variaveis_hotel.ipynb](analise/01_avaliacao_variaveis_hotel.ipynb): avaliação das variáveis, vazamento e escopo |
 | `apresentacao/` | Apresentação em um único arquivo HTML, com a fala nas notas do apresentador |
+| [apresentacao_html/](apresentacao_html/para_quem_vale_ligar.html) | Modelo de referência para a nossa apresentação: o pitch do Hackathon Terra Signal. Abra no navegador; a tecla `N` mostra as notas |
 
 ## Como colaboramos
 
