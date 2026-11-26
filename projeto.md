@@ -137,13 +137,26 @@ comunicacao/
 │   └── base_bike_sharing.md
 ├── dados/                   # base escolhida (CSV)
 ├── analise/                 # script ou notebook da análise e gráficos
-└── apresentacao/            # slides em HTML (reveal.js)
+└── apresentacao/            # apresentação em um único arquivo HTML
 ```
 
-### Apresentação em HTML (reveal.js)
-- **Notas do apresentador:** a tecla `S` abre uma janela com a fala, o que encaixa com "slides e fala juntos" (B e C).
-- **Exporta para PDF**, caso o professor peça um arquivo.
-- Os gráficos da análise podem entrar como imagens ou interativos.
+### Apresentação em HTML (arquivo único, sem framework)
+Modelo de referência: a apresentação do Hackathon Terra Signal ([apresentacao_pitch.html](https://github.com/acrosatto/Hackathon_Terra_Signal/blob/main/reports/apresentacao_pitch.html)).
+
+| Parte | Como fazer |
+|---|---|
+| **Estrutura** | Um único arquivo HTML; cada slide é um `<section class="slide">`. |
+| **Dados** | Os números da análise ficam num bloco JSON embutido (`<script type="application/json" id="dados">`). Os gráficos leem desse bloco: se um número mudar, troca-se num lugar só. |
+| **Gráficos** | Desenhados em SVG pelo JavaScript, com as cores definidas em variáveis CSS (por exemplo, `--loss`, `--gain`, `--calm`) para manter a identidade visual. |
+| **Animações por clique** | Cada slide declara quantos passos tem (`data-steps="2"`); cada clique revela o próximo elemento. |
+| **Notas do apresentador** | `<aside class="notes" data-who="..." data-time="0:50">` em cada slide: fala, quem apresenta e duração. A tecla `N` abre o painel de notas. |
+| **Navegação** | Setas, espaço, `Home`/`End`, `F` para tela cheia e `#s3` no endereço para ir direto a um slide. |
+| **PDF** | Estilo de impressão (`@media print`) para salvar em PDF pelo navegador, caso o professor peça um arquivo. |
+
+Adaptações para este trabalho:
+- **Poucas animações:** com 4 slides, usar animação por clique só onde ela conta a história (por exemplo, revelar a comparação "modelo × regra atual" no Slide 3).
+- **Notas com `data-who` e `data-time`** em todos os slides, para o fluxo "slides e fala juntos" e para cronometrar o ensaio.
+- **Números só no bloco JSON:** depois do congelamento dos resultados (01/12), qualquer ajuste é feito ali.
 
 ### Link da apresentação
 - **GitHub Pages** (grátis em repositório público): gera um link que qualquer pessoa abre, no formato `https://<usuário>.github.io/<repositório>/`.

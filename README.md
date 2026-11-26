@@ -18,7 +18,7 @@ MBA em Ciência de Dados · **Ana, Caio e Paulo** · Entrega: **terça, 08/12**
 | [escolha_base/](escolha_base/) | Opções de base avaliadas: [Hotel Booking](escolha_base/base_hotel_booking.md) e [Bike Sharing](escolha_base/base_bike_sharing.md), cada uma com decisão, roteiro dos slides, escolhas técnicas e limitações |
 | `dados/` | Base escolhida (CSV) |
 | `analise/` | Script ou notebook da análise e gráficos |
-| `apresentacao/` | Slides em HTML (reveal.js), com a fala nas notas do apresentador |
+| `apresentacao/` | Apresentação em um único arquivo HTML, com a fala nas notas do apresentador |
 
 ## Como colaboramos
 
