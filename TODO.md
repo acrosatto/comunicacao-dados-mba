@@ -6,7 +6,8 @@ Tarefas do projeto até a apresentação (terça, 08/12). Marque `[x]` ao conclu
 
 - [ ] **Escopo:** modelar só as reservas sem depósito (`No Deposit`, 104.641 reservas)? Proposta: sim. Ver a seção "Escopo proposto" do dicionário de dados.
 - [ ] **Duplicadas:** manter ou remover as linhas idênticas? Proposta: manter e rodar uma versão sem elas para conferir.
-- [ ] **Variáveis em teste:** decidir pelo teste com e sem (notebook 04): fez pedido especial, já cancelou antes, sozinho × acompanhado, com criança, total de noites e regime de refeição.
+- [ ] **Variáveis em teste:** decidir pelo teste com e sem (notebook 05): fez pedido especial, já cancelou antes, sozinho × acompanhado, com criança, total de noites, regime de refeição e a interação agência online × antecedência.
+- [ ] **Momento do score:** no instante da reserva ou alguns dias depois? Define se o pedido especial pode entrar (ver notebook 03, seção 5).
 - [ ] **Faixas de antecedência:** até 7, 8–30, 31–90, 91–180 e mais de 180 dias?
 - [ ] **Limpeza:** tirar as reservas sem hóspede e decidir sobre as reservas com zero noites.
 - [ ] **Ação principal do slide 4:** lista de ligação (ordenar), depósito acima de um ponto de corte (decidir) ou overbooking (estimar). Proposta: lista de ligação, com depósito para a faixa de maior risco; overbooking como próximo passo.
@@ -17,9 +18,10 @@ Tarefas do projeto até a apresentação (terça, 08/12). Marque `[x]` ao conclu
 
 - [x] `01_avaliacao_variaveis_hotel.ipynb`: vazamento, escopo, linearidade no logito, V de Cramér e dicionário de dados.
 - [ ] `02_exploracao_hotel.ipynb`: tamanho do problema, quando os cancelamentos acontecem, onde se concentram, mudança em 2017 e regras simples. Primeira versão pronta; falta a revisão do grupo.
-- [ ] `03_preparacao.ipynb`: aplicar escopo e limpeza; criar as variáveis no formato do dicionário (faixas, binárias, agrupamentos); separar treino (2015 e 2016) e teste (2017).
-- [ ] `04_modelo.ipynb`: regressão logística no treino; testar com e sem as variáveis em teste; conferir se os sinais das razões de chances fazem sentido para o negócio; escolher o modelo.
-- [ ] `05_avaliacao.ipynb`, no ano de teste (2017):
+- [ ] `03_relacoes_entre_variaveis.ipynb`: variáveis derivadas, força de cada candidata, relações entre as explicativas, confusão e interação, teste do pedido especial, decomposição da alta de 2017 e VIF. Primeira versão pronta; falta a revisão do grupo.
+- [ ] `04_preparacao.ipynb`: aplicar escopo e limpeza; criar as variáveis no formato do dicionário (faixas, binárias, agrupamentos), com a categoria mais frequente como referência e as categorias pequenas juntadas; separar treino (2015 e 2016) e teste (2017).
+- [ ] `05_modelo.ipynb`: regressão logística no treino; testar com e sem as variáveis em teste e a interação agência online × antecedência (comparar pelo AIC); conferir se os sinais das razões de chances fazem sentido para o negócio, lembrando que o efeito do hotel encolhe ao controlar o segmento; escolher o modelo.
+- [ ] `06_avaliacao.ipynb`, no ano de teste (2017):
   - [ ] curva de ganho comparada às regras simples do notebook 02: o modelo precisa encontrar mais de 66% dos cancelamentos contatando 44% das reservas;
   - [ ] AUC e calibração (probabilidade prevista × taxa real), com atenção à alta de 2017;
   - [ ] precisão e recall no ponto de corte, justificado pela premissa de custo;

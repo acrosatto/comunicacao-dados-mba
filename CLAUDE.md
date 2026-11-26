@@ -24,6 +24,7 @@ O `projeto.md` é a referência para enunciado, motivos da escolha da base, rote
 | `dados/dicionario_hotel_bookings.md` | Dicionário de dados: tipo, quando se sabe e uso proposto de cada variável |
 | `analise/01_avaliacao_variaveis_hotel.ipynb` | Avaliação das variáveis: vazamento, escopo, linearidade no logito e V de Cramér |
 | `analise/02_exploracao_hotel.ipynb` | Exploração do problema: tamanho, quando os cancelamentos acontecem, onde se concentram, mudança em 2017 e regras simples que o modelo precisa vencer |
+| `analise/03_relacoes_entre_variaveis.ipynb` | Variáveis derivadas, força de cada candidata, relações entre as explicativas, confusão e interação, teste do pedido especial, decomposição da alta de 2017 e VIF |
 | `apresentacao/` | A apresentação, num único arquivo HTML |
 | `apresentacao_html/para_quem_vale_ligar.html` | Modelo de referência da apresentação (estrutura, bloco JSON, gráficos em SVG e notas). Só consulta: não editar |
 
@@ -33,10 +34,11 @@ O `projeto.md` é a referência para enunciado, motivos da escolha da base, rote
 2. **Escopo proposto:** só as reservas com `deposit_type = No Deposit` (104.641 reservas, 28,4% de cancelamento). Ainda precisa ser validado pelo grupo: confirme antes de assumir. O motivo está no dicionário, na seção "Escopo proposto".
 3. **Validação temporal:** treino com as chegadas de 2015 e 2016, teste com as de 2017 (janeiro a agosto). Não use divisão aleatória. `arrival_date_year` não entra como variável.
 4. **Numéricas:** só entram como número se forem lineares no logito (gráfico do logito por decis). Se não forem, viram faixas. `lead_time` entra em faixas.
-5. **Modelo:** regressão logística (`statsmodels`, `GLM` com família binomial). A saída usada no negócio é a probabilidade de cancelamento de cada reserva. Razões de chances ($e^b$) e métricas ficam no anexo técnico.
-6. **Dicionário atualizado:** ao incluir, tirar ou transformar uma variável, atualize a coluna "Uso proposto" do dicionário no mesmo pull request.
-7. **Congelamento:** os resultados ficam congelados em 01/12. Depois disso, o modelo não muda; só texto e visual.
-8. **Números verificáveis:** todo número de slide, fala ou texto sai de uma saída real de um notebook. Não invente nem estime de cabeça. Enquanto a análise não tiver rodado, use `__`.
+5. **Categóricas:** a referência de cada variável é a categoria mais frequente (ou a mais natural para o negócio), e as categorias pequenas são juntadas antes de criar as dummies. Variável derivada que depende de outras linhas (por exemplo, uma mediana de preço) é calculada só com os dados de treino.
+6. **Modelo:** regressão logística (`statsmodels`, `GLM` com família binomial). A saída usada no negócio é a probabilidade de cancelamento de cada reserva. Razões de chances ($e^b$) e métricas ficam no anexo técnico.
+7. **Dicionário atualizado:** ao incluir, tirar ou transformar uma variável, atualize a coluna "Uso proposto" do dicionário no mesmo pull request.
+8. **Congelamento:** os resultados ficam congelados em 01/12. Depois disso, o modelo não muda; só texto e visual.
+9. **Números verificáveis:** todo número de slide, fala ou texto sai de uma saída real de um notebook. Não invente nem estime de cabeça. Enquanto a análise não tiver rodado, use `__`.
 
 ## Como rodar
 
