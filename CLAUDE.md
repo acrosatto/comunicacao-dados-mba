@@ -12,14 +12,13 @@ Apresentação dos resultados de uma regressão logística que apoia uma decisã
 - **Público:** Diretoria de Receita (não técnica) e analista de BI (técnico).
 - **Formato:** até 8 minutos; até 4 slides principais e 1 ou 2 de anexo técnico. Roteiro: contexto e decisão → como a análise funciona → evidências e interpretação → recomendação e próximos passos. A recomendação precisa ser clara.
 
-O `projeto.md` é a referência para enunciado, papéis, fluxo de revisão, cronograma e formato da apresentação. Se uma tarefa contradisser o `projeto.md`, avise quem pediu antes de seguir.
+O `projeto.md` é a referência para enunciado, motivos da escolha da base, roteiro dos slides, forma de trabalho, cronograma e formato da apresentação. Se uma tarefa contradisser o `projeto.md`, avise quem pediu antes de seguir.
 
 ## Onde está cada coisa
 
 | Caminho | Conteúdo |
 | --- | --- |
-| `projeto.md` | Enunciado, papéis, fluxo de revisão, cronograma e modelo da apresentação |
-| `escolha_base/base_hotel_booking.md` | Roteiro dos slides, escolhas técnicas e limitações da base escolhida |
+| `projeto.md` | Enunciado, base escolhida e motivos, roteiro dos slides, forma de trabalho, cronograma e modelo da apresentação |
 | `dados/hotel_bookings.csv` | Base original. Não editar: toda transformação fica nos notebooks |
 | `dados/dicionario_hotel_bookings.md` | Dicionário de dados: tipo, quando se sabe e uso proposto de cada variável |
 | `analise/01_avaliacao_variaveis_hotel.ipynb` | Avaliação das variáveis: vazamento, escopo, linearidade no logito e V de Cramér |
@@ -43,7 +42,7 @@ Jupyter, pelo Anaconda. Os notebooks ficam em `analise/`, numerados na ordem de 
 
 ## Como colaborar
 
-- Cada etapa tem 1 responsável e 2 revisores (`projeto.md`, seção 3).
+- Os três trabalham em todas as etapas, e cada pull request é revisado pelos outros dois (`projeto.md`, seção 3).
 - Trabalhe numa branch própria e abra um pull request. Não faça commit direto na `main` nem merge sem as duas aprovações.
 - Commits e pull requests em português, dizendo o que mudou.
 - Dúvidas e decisões em aberto viram *issues*.

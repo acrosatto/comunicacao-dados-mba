@@ -6,17 +6,16 @@ MBA em Ciência de Dados · **Ana, Caio e Paulo** · Entrega: **terça, 08/12**
 
 ## Status
 
-- **Base:** [Hotel Booking Demand](escolha_base/base_hotel_booking.md), com regressão logística (escolhida no kickoff, 26/11).
-- **Papéis:** a definir (A – Análise, B – Slides, C – Apresentador).
-- **Próximo marco:** kickoff na quinta, 26/11.
+- **Base:** Hotel Booking Demand, com regressão logística (escolhida no kickoff, 26/11).
+- **Equipe:** os três trabalham em todas as etapas.
+- **Próximo marco:** modelo decidido e resultados congelados na terça, 01/12.
 
 ## Onde está cada coisa
 
 | Arquivo ou pasta | Conteúdo |
 |---|---|
-| [projeto.md](projeto.md) | Enunciado, divisão de tarefas, fluxo de revisão, cronograma e pendências |
+| [projeto.md](projeto.md) | Enunciado, base escolhida e motivos, roteiro dos slides, forma de trabalho, cronograma e modelo da apresentação |
 | [CLAUDE.md](CLAUDE.md) | Contexto e regras do projeto para agentes de IA que trabalham no repositório |
-| [escolha_base/](escolha_base/) | Opções de base avaliadas: [Hotel Booking](escolha_base/base_hotel_booking.md) e [Bike Sharing](escolha_base/base_bike_sharing.md), cada uma com decisão, roteiro dos slides, escolhas técnicas e limitações |
 | `dados/` | Base escolhida (CSV) e [dicionário de dados do Hotel Booking](dados/dicionario_hotel_bookings.md) |
 | `analise/` | Notebooks da análise e gráficos. [01_avaliacao_variaveis_hotel.ipynb](analise/01_avaliacao_variaveis_hotel.ipynb): avaliação das variáveis, vazamento e escopo |
 | `apresentacao/` | Apresentação em um único arquivo HTML, com a fala nas notas do apresentador |
@@ -24,11 +23,11 @@ MBA em Ciência de Dados · **Ana, Caio e Paulo** · Entrega: **terça, 08/12**
 
 ## Como colaboramos
 
-Cada etapa tem **1 responsável e 2 revisores** (detalhes em [projeto.md](projeto.md#3-equipe)).
+Os três trabalham em todas as etapas, e cada mudança é revisada pelos outros dois (detalhes em [projeto.md](projeto.md#3-equipe)).
 
-1. O responsável trabalha numa *branch* própria e abre um *pull request* quando a etapa estiver pronta.
-2. Os dois revisores comentam no *pull request* o que aprovam e o que precisa mudar. Quem não usa git pode revisar direto pelo site do GitHub.
-3. Com as duas aprovações, o *pull request* é incorporado e a próxima etapa começa.
+1. Quem faz a mudança trabalha numa *branch* própria e abre um *pull request*.
+2. Os outros dois comentam no *pull request* o que aprovam e o que precisa mudar. Quem não usa git pode revisar direto pelo site do GitHub.
+3. Com as duas aprovações, o *pull request* é incorporado.
 
 Dúvidas e decisões em aberto ficam registradas em *issues*.
 
