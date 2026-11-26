@@ -54,13 +54,7 @@ Livre.
 
 ## 2. Base de dados
 
-As opções estão detalhadas em arquivos separados. A base foi escolhida no kickoff (26/11): Hotel Booking Demand.
-
-| Base | Técnica | Status |
-|---|---|---|
-| [Hotel Booking Demand](escolha_base/base_hotel_booking.md) | Regressão logística | ✅ Escolhida |
-| [Bike Sharing](escolha_base/base_bike_sharing.md) | Regressão linear | Não escolhida |
-| [Wholesale Customers](https://archive.ics.uci.edu/dataset/292/wholesale+customers) | Clusterização | ❌ Descartada: só 8 variáveis, e os clusters tendem a repetir a variável `Channel` |
+**Hotel Booking Demand, com regressão logística**, escolhida no kickoff (26/11). Roteiro dos slides, motivos da escolha e limitações em [base_hotel_booking.md](base_hotel_booking.md); variáveis no [dicionário de dados](dados/dicionario_hotel_bookings.md).
 
 ---
 
@@ -68,47 +62,39 @@ As opções estão detalhadas em arquivos separados. A base foi escolhida no kic
 
 Projeto criado e apresentado por Ana, Caio e Paulo
 
-### Divisão de tarefas (proposta)
+### Modelo de trabalho: os três em todas as etapas
+- Ana, Caio e Paulo trabalham juntos em todas as etapas: análise, slides, fala e ensaio.
+- Cada mudança entra por um *pull request*, revisado pelos outros dois antes do merge.
+- Todos conhecem tudo (notebooks, slides, roteiro), para que qualquer um consiga responder perguntas na apresentação.
 
-| Pessoa | Papel | Responsabilidades |
-|---|---|---|
-| **A – Análise** | Responsável pelos números | Limpeza, modelo, validação e principais escolhas técnicas. Entrega os resultados prontos e escreve o Anexo técnico. Responde às perguntas técnicas na apresentação. |
-| **B – Slides** | Responsável pelos slides | Gera os slides a partir dos resultados de A. Garante identidade visual única, gráficos limpos e uma mensagem por slide. |
-| **C – Apresentador** | Responsável pela história | Define o público e a decisão no início, escreve o roteiro de fala, revisa os slides como público não técnico ("entendi isso em 10 segundos?") e apresenta. |
-
-### Modelo de trabalho: 1 responsável por etapa + 2 revisores
-- Cada etapa tem um responsável que produz e os outros dois revisam e validam as decisões antes de seguir para a próxima.
-- Todos têm acesso a tudo (script, slides, roteiro), para que qualquer um consiga responder perguntas na apresentação.
-
-| Etapa | Responsável | Revisores | O que os revisores validam |
-|---|---|---|---|
-| 0. Kickoff (juntos) | Todos | — | Pergunta de negócio, público, decisão em discussão e mensagem principal |
-| 1. Análise e Anexo técnico | A | B e C | Escolhas técnicas listadas no arquivo da base (vazamento, validação, métricas) e se os resultados fazem sentido para o negócio |
-| 2. Slides e fala (juntos) | B (slides) e C (fala, nas notas do apresentador) | A | Os números e interpretações estão corretos, inclusive o que é dito na fala? B e C revisam um ao outro enquanto trabalham juntos. |
-| 3. Ensaio | C | A e B | Clareza para o público não técnico, tempo, transições, respostas para perguntas prováveis |
+| Etapa | O que os revisores validam |
+|---|---|
+| 1. Análise e Anexo técnico | Regras da análise do [CLAUDE.md](CLAUDE.md) (vazamento, escopo, validação temporal), uso das variáveis no dicionário e se os resultados fazem sentido para o negócio |
+| 2. Slides e fala | Os números batem com as saídas dos notebooks, inclusive o que é dito na fala? A história flui e cada slide tem uma única mensagem? Quem não é técnico entende em 10 segundos? |
+| 3. Ensaio | Clareza para o público não técnico, tempo (até 8 minutos), transições e respostas para perguntas prováveis |
 
 ### Cuidados
-- Revisão é sobre decisões, não só sobre "achei bom": cada revisor registra o que aprovou ou o que precisa mudar.
-- C participa desde o kickoff, ajudando a definir a mensagem principal.
-- A e B também ficam no palco: A responde às perguntas técnicas e B pode conduzir os slides.
-- Confirmar com o professor se todos precisam falar. Se sim: C apresenta os slides 1 a 4 e A apresenta o anexo técnico.
+- Revisão é sobre decisões, não só sobre "achei bom": cada revisor registra no *pull request* o que aprovou ou o que precisa mudar.
+- Decisões em aberto (por exemplo, o escopo só com reservas sem depósito) viram *issues* e são fechadas pelo grupo.
+- Quem fala em cada slide fica registrado no `data-who` das notas. Confirmar com o professor se todos precisam falar.
 
 ---
 
 ## 4. Cronograma
 
-| Data | Etapa | Quem | Entrega |
-|---|---|---|---|
-| Qui 26/11 | Kickoff (1h) | Todos | Escolha da base, decisão, público e mensagem principal |
-| 26/11 → Dom 29/11 | Análise | A | Script e resultados v1 |
-| *em paralelo* | Contexto de negócio e perguntas prováveis | C | Insumos para os slides 1 e 4 e para a sessão de perguntas |
-| Seg 30/11 → Ter 01/12 | Revisão da análise | B e C revisam | 🔒 Resultados congelados na ter 01/12 |
-| Qua 02/12 → Qui 03/12 | Slides e fala juntos + Anexo técnico | B e C juntos, A no anexo | Apresentação v1 com notas do apresentador |
-| Sex 04/12 | Revisão de slides e fala | A revisa | Lista de ajustes |
-| Sáb 05/12 | Ajustes | B e C | Apresentação v2 |
-| Dom 06/12 | Ensaio geral com cronômetro | Todos | Ajustes de fala e tempo |
-| Seg 07/12 | Folga para imprevistos e ensaio final | Todos | Versão final |
-| **Ter 08/12** | **Apresentação** | — | — |
+Todas as etapas são feitas pelos três.
+
+| Data | Etapa | Entrega |
+|---|---|---|
+| Qui 26/11 | Kickoff | ✅ Base escolhida: Hotel Booking |
+| 26/11 → Ter 01/12 | Análise, escolha do modelo e revisão | 🔒 Modelo decidido e resultados congelados na ter 01/12 |
+| *em paralelo* | Contexto de negócio e perguntas prováveis | Insumos para os slides 1 e 4 e para a sessão de perguntas |
+| Qua 02/12 → Qui 03/12 | Slides e fala juntos + Anexo técnico | Apresentação v1 com notas do apresentador |
+| Sex 04/12 | Revisão de slides e fala | Lista de ajustes |
+| Sáb 05/12 | Ajustes | Apresentação v2 |
+| Dom 06/12 | Ensaio geral com cronômetro | Ajustes de fala e tempo |
+| Seg 07/12 | Folga para imprevistos e ensaio final | Versão final |
+| **Ter 08/12** | **Apresentação** | — |
 
 ### Regras
 - Depois de 01/12 o modelo não muda mais.
@@ -121,23 +107,23 @@ Projeto criado e apresentado por Ana, Caio e Paulo
 ### Repositório no GitHub (público)
 - Um repositório **público**, com os 3 integrantes como colaboradores, com script, arquivos .md e apresentação num lugar só.
 - Público porque cada turma escolhe a própria base (sem risco de cópia), o GitHub Pages fica grátis e o projeto serve de portfólio.
-- As bases são públicas e podem ser redistribuídas com citação da fonte.
+- A base é pública e pode ser redistribuída com citação da fonte.
 - O histórico registra quem mudou o quê e permite voltar atrás.
 - As revisões são registradas no próprio GitHub (*issues* ou *pull requests*), o que atende à regra de "cada revisor registra o que aprovou ou o que precisa mudar".
 - Cada integrante precisa de uma conta no GitHub. Quem não usa git pode revisar e comentar direto pelo site.
 
-Estrutura de pastas proposta:
+Estrutura de pastas:
 
 ```
 comunicacao/
 ├── README.md                # resumo do projeto e do fluxo de revisão
+├── CLAUDE.md                # contexto e regras para agentes de IA
 ├── projeto.md               # este arquivo
-├── escolha_base/            # opções de base avaliadas
-│   ├── base_hotel_booking.md
-│   └── base_bike_sharing.md
-├── dados/                   # base escolhida (CSV)
-├── analise/                 # script ou notebook da análise e gráficos
-└── apresentacao/            # apresentação em um único arquivo HTML
+├── base_hotel_booking.md    # roteiro dos slides, escolhas técnicas e limitações
+├── dados/                   # base original (CSV) e dicionário de dados
+├── analise/                 # notebooks da análise, numerados (01_, 02_...)
+├── apresentacao/            # apresentação em um único arquivo HTML
+└── apresentacao_html/       # modelo de referência da apresentação (só consulta)
 ```
 
 ### Apresentação em HTML (arquivo único, sem framework)
