@@ -16,8 +16,8 @@ MBA em Ciência de Dados · **Ana, Caio e Paulo** · Entrega: **terça, 08/12**
 |---|---|
 | [projeto.md](projeto.md) | Enunciado, divisão de tarefas, fluxo de revisão, cronograma e pendências |
 | [escolha_base/](escolha_base/) | Opções de base avaliadas: [Hotel Booking](escolha_base/base_hotel_booking.md) e [Bike Sharing](escolha_base/base_bike_sharing.md), cada uma com decisão, roteiro dos slides, escolhas técnicas e limitações |
-| `dados/` | Base escolhida (CSV) |
-| `analise/` | Script ou notebook da análise e gráficos |
+| `dados/` | Base escolhida (CSV) e [dicionário de dados do Hotel Booking](dados/dicionario_hotel_bookings.md) |
+| `analise/` | Notebooks da análise e gráficos. [01_avaliacao_variaveis_hotel.ipynb](analise/01_avaliacao_variaveis_hotel.ipynb): avaliação das variáveis, vazamento e escopo |
 | `apresentacao/` | Apresentação em um único arquivo HTML, com a fala nas notas do apresentador |
 
 ## Como colaboramos
@@ -42,4 +42,4 @@ Dúvidas e decisões em aberto ficam registradas em *issues*.
 
 ## Como rodar a análise
 
-*A preencher quando o script estiver pronto (dependências e comando para executar).*
+Abra os notebooks de `analise/` no Jupyter (o Anaconda já traz tudo). Eles leem a base de `../dados/hotel_bookings.csv` e usam pandas, numpy, scipy e matplotlib.
