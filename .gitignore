@@ -19,3 +19,6 @@ desktop.ini
 
 # Arquivos temporários do Office
 ~$*
+
+# Material de referência local (não vai para o repositório)
+exemplo/
