@@ -16,8 +16,9 @@ MBA em Ciência de Dados · **Ana, Caio e Paulo** · Entrega: **terça, 08/12**
 |---|---|
 | [projeto.md](projeto.md) | Enunciado, base escolhida e motivos, roteiro dos slides, forma de trabalho, cronograma e modelo da apresentação |
 | [CLAUDE.md](CLAUDE.md) | Contexto e regras do projeto para agentes de IA que trabalham no repositório |
+| [TODO.md](TODO.md) | Tarefas e decisões em aberto até a apresentação |
 | `dados/` | Base escolhida (CSV) e [dicionário de dados do Hotel Booking](dados/dicionario_hotel_bookings.md) |
-| `analise/` | Notebooks da análise e gráficos. [01_avaliacao_variaveis_hotel.ipynb](analise/01_avaliacao_variaveis_hotel.ipynb): avaliação das variáveis, vazamento e escopo |
+| `analise/` | Notebooks da análise e gráficos. [01_avaliacao_variaveis_hotel.ipynb](analise/01_avaliacao_variaveis_hotel.ipynb): avaliação das variáveis, vazamento e escopo. [02_exploracao_hotel.ipynb](analise/02_exploracao_hotel.ipynb): tamanho do problema, quando os cancelamentos acontecem, onde se concentram e regras simples |
 | `apresentacao/` | Apresentação em um único arquivo HTML, com a fala nas notas do apresentador |
 | [apresentacao_html/](apresentacao_html/para_quem_vale_ligar.html) | Modelo de referência para a nossa apresentação: o pitch do Hackathon Terra Signal. Abra no navegador; a tecla `N` mostra as notas |
 

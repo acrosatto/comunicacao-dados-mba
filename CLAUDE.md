@@ -19,9 +19,11 @@ O `projeto.md` é a referência para enunciado, motivos da escolha da base, rote
 | Caminho | Conteúdo |
 | --- | --- |
 | `projeto.md` | Enunciado, base escolhida e motivos, roteiro dos slides, forma de trabalho, cronograma e modelo da apresentação |
+| `TODO.md` | Tarefas e decisões em aberto até a apresentação. Confira antes de começar uma tarefa |
 | `dados/hotel_bookings.csv` | Base original. Não editar: toda transformação fica nos notebooks |
 | `dados/dicionario_hotel_bookings.md` | Dicionário de dados: tipo, quando se sabe e uso proposto de cada variável |
 | `analise/01_avaliacao_variaveis_hotel.ipynb` | Avaliação das variáveis: vazamento, escopo, linearidade no logito e V de Cramér |
+| `analise/02_exploracao_hotel.ipynb` | Exploração do problema: tamanho, quando os cancelamentos acontecem, onde se concentram, mudança em 2017 e regras simples que o modelo precisa vencer |
 | `apresentacao/` | A apresentação, num único arquivo HTML |
 | `apresentacao_html/para_quem_vale_ligar.html` | Modelo de referência da apresentação (estrutura, bloco JSON, gráficos em SVG e notas). Só consulta: não editar |
 
@@ -46,6 +48,7 @@ Jupyter, pelo Anaconda. Os notebooks ficam em `analise/`, numerados na ordem de 
 - Trabalhe numa branch própria e abra um pull request. Não faça commit direto na `main` nem merge sem as duas aprovações.
 - Commits e pull requests em português, dizendo o que mudou.
 - Dúvidas e decisões em aberto viram *issues*.
+- Ao concluir uma tarefa do `TODO.md`, marque `[x]` no mesmo pull request.
 
 ## Como escrever
 
