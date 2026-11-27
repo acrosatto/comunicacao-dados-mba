@@ -21,7 +21,7 @@ Decisões de escopo e limpeza em que o `01_exploratoria.ipynb` (Ana) e os notebo
 | Zero noites | 715 | Manter; juntar com 1 noite no total de noites | Dicionário: juntar com 1 noite. Notebook 03: faixa própria (`0`) em `faixa_noites` | diferente entre o dicionário e o notebook 03 |
 | `meal = Undefined` | 1.169 | Manter separado ("não informado"): cancela 24,5%, contra 37,2% do SC | Juntar com SC em `sem_refeicao` | diferente; testar na bivariada |
 | Linhas idênticas | 31.994 cópias | Manter; rodar o modelo sem elas para conferir | Manter; rodar o modelo sem elas para conferir | igual |
-| `agent` / `company` vazios | 16.340 / 112.593 | Vazio vira categoria ("sem agência" / "sem empresa") se a variável entrar | As duas saem | igual na prática, se saírem |
+| `agent` / `company` vazios | 16.340 / 112.593 | Ainda não decidido se as variáveis entram. Se entrarem, o vazio vira categoria ("sem agência" / "sem empresa") | As duas saem do modelo (`agent`: código sem significado de negócio; `company`: 94% vazia), então o vazio não precisa de tratamento | a decidir: primeiro se entram (bivariada), depois o vazio |
 | `Undefined` no segmento e no canal | 2 e 5 | Segmento em "Outros"; o canal tende a sair | Segmento em "Outros" (com Complementary e Aviation); o canal sai | igual |
 
 ## Para fechar com o grupo
