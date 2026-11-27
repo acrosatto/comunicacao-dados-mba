@@ -100,7 +100,7 @@ def resumo_colunas(base, n_frequentes=3):
                 f'{valor} ({_formatar_inteiro(n)})' for valor, n in frequentes.items()
             ),
         }
-    return pd.DataFrame.from_dict(linhas, orient='index')
+    return pd.DataFrame.from_dict(linhas, orient='index').rename_axis('coluna')
 
 
 # -----------------------------------------------------------------------------
@@ -225,7 +225,7 @@ def contar_casos(base, casos, y='is_canceled'):
             'pct_base': condicao.mean(),
             'taxa': base.loc[condicao, y].mean() if condicao.any() else np.nan,
         }
-    return pd.DataFrame.from_dict(linhas, orient='index')
+    return pd.DataFrame.from_dict(linhas, orient='index').rename_axis('caso')
 
 
 # -----------------------------------------------------------------------------
@@ -380,7 +380,70 @@ def preparar_base(hotel):
     for nome, condicao in condicoes.items():
         manter &= condicao
         ficam[nome] = int(manter.sum())
-    passos = pd.DataFrame({'reservas': ficam, 'saem neste passo': -pd.Series(ficam).diff()})
+    passos = pd.DataFrame({'reservas': ficam, 'saem neste passo': -pd.Series(ficam).diff()}).rename_axis('passo')
 
     base = hotel[manter].assign(noites=noites[manter], hospedes=hospedes[manter], tem_gemea=tem_gemea[manter])
     return base, passos
+
+
+# -----------------------------------------------------------------------------
+# Exibição das tabelas
+# -----------------------------------------------------------------------------
+def tabela_simples(tabela, casas=4):
+    """Tabela com todos os nomes de coluna numa linha só, sem o índice à parte.
+
+    O índice (o rótulo das linhas) vira coluna comum, e a exibição esconde o índice.
+    Números decimais saem com `casas` casas (4 por padrão: com 3, 36.000 parece milhar
+    em português); números inteiros guardados como decimal saem sem casas (49, e não
+    49.0000), e valores não nulos menores que a última casa saem como < 0.0001.
+    Vazios saem em branco. Índices sem nome recebem um nome padrão quando dá:
+    variavel e nivel nas tabelas que juntam variáveis, linha no número da linha da base.
+
+    Parâmetros
+    ----------
+    tabela : DataFrame
+    casas : int
+
+    Retorna
+    -------
+    Styler do pandas, pronto para exibir no notebook.
+    """
+    t = tabela.copy()
+    if not (isinstance(t.index, pd.RangeIndex) and t.index.name is None):
+        nomes = list(t.index.names)
+        if all(n is None for n in nomes):
+            if len(nomes) == 2:
+                nomes = ['variavel', 'nivel']                  # tabelas que juntam várias variáveis
+            elif pd.api.types.is_integer_dtype(t.index):
+                nomes = ['linha']                              # número da linha na base
+        # níveis ainda sem nome viram colunas sem título (nomes em branco distintos)
+        t.index = t.index.set_names([n if n is not None else ' ' * (i + 1) for i, n in enumerate(nomes)])
+        t = t.reset_index()
+    if not isinstance(t.columns, pd.MultiIndex):
+        t.columns.name = None
+
+    def numero(v):
+        if isinstance(v, (float, np.floating)):
+            if np.isnan(v):
+                return ''
+            if float(v).is_integer():
+                return f'{v:.0f}'                             # 49.0 sai como 49
+            if abs(v) < 0.5 * 10 ** -casas:
+                return f'< {10 ** -casas:.{casas}f}'          # não zero, mas pequeno demais para as casas
+            return f'{v:.{casas}f}'
+        return v
+
+    return t.style.hide(axis='index').format(numero)
+
+
+def usar_tabelas_simples(casas=4):
+    """Faz o notebook exibir toda tabela (DataFrame) no formato de tabela_simples.
+
+    Chamar uma vez, logo depois dos imports. Vale para as tabelas mostradas no fim de
+    uma célula e para as mostradas com display().
+    """
+    from IPython import get_ipython
+    ipython = get_ipython()
+    if ipython is not None:
+        ipython.display_formatter.formatters['text/html'].for_type(
+            pd.DataFrame, lambda tabela: tabela_simples(tabela, casas).to_html())
