@@ -483,7 +483,7 @@ def comparar_cortes(base, variavel, opcoes, formulas=None, y='is_canceled'):
 
     Retorna
     -------
-    DataFrame ordenado pelo AIC, com n_coeficientes, AIC e BIC (e a diferença de cada um
+    DataFrame ordenado pelo AIC, com o número de faixas, n_coeficientes, AIC e BIC (e a diferença de cada um
     para a melhor opção),
     menor_faixa (parcela da base na menor faixa) e a taxa de cada faixa, em ordem.
     """
@@ -498,18 +498,18 @@ def comparar_cortes(base, variavel, opcoes, formulas=None, y='is_canceled'):
     linhas = []
     for nome, formula in (formulas or {}).items():
         aic, bic, n_coef = ajustar(formula, base)
-        linhas.append({'opcao': nome, 'n_coeficientes': n_coef, 'AIC': aic, 'BIC': bic,
+        linhas.append({'opcao': nome, 'faixas': np.nan, 'n_coeficientes': n_coef, 'AIC': aic, 'BIC': bic,
                        'menor_faixa': np.nan, 'taxa_por_faixa': ''})
     for nome, limites in opcoes.items():
         faixa = pd.cut(base[variavel], limites)
         aic, bic, n_coef = ajustar(f'{y} ~ C(_faixa)', base.assign(_faixa=faixa.astype(str)))
         grupos = base.groupby(faixa, observed=True)[y]
-        linhas.append({'opcao': nome, 'n_coeficientes': n_coef, 'AIC': aic, 'BIC': bic,
+        linhas.append({'opcao': nome, 'faixas': len(limites) - 1, 'n_coeficientes': n_coef, 'AIC': aic, 'BIC': bic,
                        'menor_faixa': grupos.size().min() / len(base),
                        'taxa_por_faixa': ' / '.join(f'{t:.1%}'.replace('.', ',') for t in grupos.mean())})
     tabela = pd.DataFrame(linhas).sort_values('AIC')
-    tabela.insert(3, 'dif_AIC', tabela['AIC'] - tabela['AIC'].min())
-    tabela.insert(5, 'dif_BIC', tabela['BIC'] - tabela['BIC'].min())
+    tabela.insert(4, 'dif_AIC', tabela['AIC'] - tabela['AIC'].min())
+    tabela.insert(6, 'dif_BIC', tabela['BIC'] - tabela['BIC'].min())
     return tabela.set_index('opcao').round({'AIC': 1, 'dif_AIC': 1, 'BIC': 1, 'dif_BIC': 1})
 
 
