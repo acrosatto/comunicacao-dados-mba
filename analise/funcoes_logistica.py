@@ -19,7 +19,7 @@ Uso, a partir de um notebook em analise/<pessoa>/:
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.ticker import PercentFormatter
+from matplotlib.ticker import FuncFormatter, PercentFormatter
 from statsmodels.stats.proportion import proportion_confint
 
 
@@ -302,6 +302,7 @@ def grafico_logito(tabela, titulo='', rotulo_x='', taxa_geral=None, ax=None):
     ax.set_title(titulo)
     ax.set_xlabel(rotulo_x)
     ax.set_ylabel('logito do cancelamento')
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f'{v:g}'.replace('.', ',')))   # -0,5
     ax.legend(frameon=False, fontsize=9)
     return ax
 
