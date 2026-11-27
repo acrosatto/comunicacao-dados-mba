@@ -174,7 +174,10 @@ def grafico_taxa_por_nivel(tabela, taxa_geral=None, titulo='', linha=False, ax=N
         ax.fill_between(posicoes, tabela['ic_inf'], tabela['ic_sup'],
                         color=CORES['principal'], alpha=0.15, linewidth=0, label='IC 95%')
         ax.plot(posicoes, tabela['taxa'], marker='o', markersize=4,
-                color=CORES['principal'], label='taxa de cancelamento')
+                color=CORES['principal'], label='taxa de cancelamento', clip_on=False)
+        # os eixos se encontram no 0: sem folga antes do primeiro nível, e o eixo y começa em 0%
+        ax.set_xlim(0, len(tabela) - 1)
+        ax.set_ylim(bottom=0)
     else:
         erro = [tabela['taxa'] - tabela['ic_inf'], tabela['ic_sup'] - tabela['taxa']]
         ax.errorbar(posicoes, tabela['taxa'], yerr=erro, fmt='o', capsize=4,
@@ -300,9 +303,14 @@ def grafico_logito(tabela, titulo='', rotulo_x='', taxa_geral=None, posicao=None
         _, ax = plt.subplots(figsize=(6, 3.8))
     erro = [tabela['logito'] - tabela['logito_inf'], tabela['logito_sup'] - tabela['logito']]
     x = tabela['mediana'] if posicao is None else list(posicao)
-    ax.plot(x, tabela['logito'], color=CORES['principal'], linewidth=1, alpha=0.5)
-    ax.errorbar(x, tabela['logito'], yerr=erro, fmt='o', markersize=5, capsize=3,
-                color=CORES['principal'], label='logito (IC 95%)')
+    ax.plot(x, tabela['logito'], color=CORES['principal'], linewidth=1, alpha=0.5, clip_on=False)
+    pontos = ax.errorbar(x, tabela['logito'], yerr=erro, fmt='o', markersize=5, capsize=3,
+                         color=CORES['principal'], label='logito (IC 95%)')
+    if min(x) == 0:
+        # o eixo x começa no 0, encostado no eixo y (sem a folga padrão do matplotlib)
+        ax.set_xlim(left=0)
+        for parte in pontos.lines[0:1] + pontos.lines[1] + pontos.lines[2]:
+            parte.set_clip_on(False)
     if taxa_geral is not None:
         ax.axhline(np.log(taxa_geral / (1 - taxa_geral)), color=CORES['referencia'], linestyle='--',
                    linewidth=1, label=f'taxa geral ({taxa_geral:.1%})'.replace('.', ','))
