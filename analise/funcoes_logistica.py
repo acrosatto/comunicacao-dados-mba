@@ -331,3 +331,48 @@ def v_cramer(base, variavel, y='is_canceled'):
     tabela = pd.crosstab(base[variavel], base[y])
     qui2 = chi2_contingency(tabela, correction=False)[0]
     return float(np.sqrt(qui2 / (tabela.values.sum() * (min(tabela.shape) - 1))))
+
+
+# -----------------------------------------------------------------------------
+# Base do modelo
+# -----------------------------------------------------------------------------
+def preparar_base(hotel):
+    """Aplica o escopo e a limpeza propostos no notebook 01 (seções 4 e 5).
+
+    Escopo: só reservas sem depósito (No Deposit). Limpeza: tira as reservas com
+    `children` vazio, as sem hóspede e as diárias fora de 0 a 1.000. Acrescenta as
+    colunas derivadas usadas na análise: total de noites, total de hóspedes e se a
+    linha tem gêmea idêntica na base original.
+
+    Parâmetros
+    ----------
+    hotel : DataFrame
+        A base original, como lida do CSV (antes de qualquer coluna nova, para a
+        marcação de linhas idênticas usar só as colunas originais).
+
+    Retorna
+    -------
+    base : DataFrame
+        As reservas que ficam, com as colunas noites, hospedes e tem_gemea.
+    passos : DataFrame
+        Quantas reservas ficam e quantas saem em cada passo.
+    """
+    hospedes = hotel['adults'] + hotel['children'].fillna(0) + hotel['babies']
+    noites = hotel['stays_in_weekend_nights'] + hotel['stays_in_week_nights']
+    tem_gemea = hotel.duplicated(keep=False)
+
+    condicoes = {
+        'sem depósito (escopo)': hotel['deposit_type'] == 'No Deposit',
+        'children preenchido': hotel['children'].notna(),
+        'com hóspede': hospedes > 0,
+        'diária entre 0 e 1.000': hotel['adr'].between(0, 1000),
+    }
+    manter = pd.Series(True, index=hotel.index)
+    ficam = {'base inteira': len(hotel)}
+    for nome, condicao in condicoes.items():
+        manter &= condicao
+        ficam[nome] = int(manter.sum())
+    passos = pd.DataFrame({'reservas': ficam, 'saem neste passo': -pd.Series(ficam).diff()})
+
+    base = hotel[manter].assign(noites=noites[manter], hospedes=hospedes[manter], tem_gemea=tem_gemea[manter])
+    return base, passos

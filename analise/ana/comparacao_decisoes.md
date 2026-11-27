@@ -1,6 +1,6 @@
 # Comparação de decisões: notebook da Ana × notebooks do grupo
 
-Decisões de escopo e limpeza em que o `01_exploratoria.ipynb` (Ana) e os notebooks `01` a `03` da pasta `analise/` chegam a tratamentos diferentes, ou em que a proposta ainda não foi aplicada no código. Serve para o grupo fechar cada ponto antes do `04_preparacao.ipynb`.
+Decisões de escopo e limpeza em que os notebooks da Ana (`01_exploratoria.ipynb` e `02_variaveis.ipynb`) e os notebooks `01` a `03` da pasta `analise/` chegam a tratamentos diferentes, ou em que a proposta ainda não foi aplicada no código. Serve para o grupo fechar cada ponto antes do `04_preparacao.ipynb`.
 
 **Situação:** *igual* (mesmo tratamento), *diferente* (tratamentos diferentes) ou *a decidir* (proposta sem decisão do grupo).
 
@@ -33,9 +33,9 @@ Decisões de escopo e limpeza em que o `01_exploratoria.ipynb` (Ana) e os notebo
 | `noites` | Faixas: até 1 (zero noites junto), 2–3, 4–7 e mais de 7 | Dicionário: as mesmas faixas. Notebook 03: zero noites numa faixa própria | igual ao dicionário |
 | `meal` | Testar com quatro níveis: BB (referência), com pensão (HB e FB), SC e Undefined | Testar: sem refeição (SC e Undefined) × com refeição | diferente |
 | `arrival_date_month` | Duas temporadas: jul–ago × resto do ano. Só jul–ago fica acima nos dois anos (35,0% e 30,7%); em 2016, abr–jun (25,9%) e set–mar (26,9%) não se separam | Três temporadas: jul–ago, abr–jun e set–mar | diferente |
-| `customer_type` | A decidir na seção 8. Group (348 reservas, 12,6%) não se parece com nenhum nível. Possibilidades: juntar com Contract (taxa mais próxima, 22,4%), juntar com Transient-Party (conceito mais próximo, 24,1%), deixar separado ou tirar a variável (V de 0,048; repete parte do segmento) | Entra | a decidir |
+| `customer_type` | A decidir no notebook 02, seção 4. Group (348 reservas, 12,6%) não se parece com nenhum nível. Possibilidades: juntar com Contract (taxa mais próxima, 22,4%), juntar com Transient-Party (conceito mais próximo, 24,1%), deixar separado ou tirar a variável (V de 0,048; repete parte do segmento) | Entra | a decidir |
 | `company` | Testar "paga por empresa": nos grupos, 4,8% de cancelamento com empresa (625 reservas), contra 34,0% sem | Sai: quase toda vazia | diferente |
-| `adr` | Em euros, não serve: a relação muda em 2017 (acima de 129, de cerca de 31% no treino para 38% a 40% no teste) e o preço sobe (mediana do urbano de 96 para 114,4). A seção 8 decide se entra | Entra como número | diferente |
+| `adr` | Em euros, não serve: a relação muda em 2017 (acima de 129, de cerca de 31% no treino para 38% a 40% no teste) e o preço sobe (mediana do urbano de 96 para 114,4). O notebook 02, seção 4, decide se entra | Entra como número | diferente |
 | `agent` | Sai: 275 códigos anônimos, embora separem reservas do mesmo segmento (agência online: de 13,8% a 38,6%) | Sai por ora | igual |
 
 ## Leituras
@@ -54,4 +54,4 @@ Decisões de escopo e limpeza em que o `01_exploratoria.ipynb` (Ana) e os notebo
 6. **Criança e bebê:** `com_crianca` com ou sem os bebês.
 7. **Temporadas:** duas (jul–ago × resto) ou três.
 8. **`company`:** testar "paga por empresa" ou deixar fora.
-9. **`customer_type`:** entra ou sai (seção 8); se entrar, o destino do nível Group.
+9. **`customer_type`:** entra ou sai (notebook 02, seção 4); se entrar, o destino do nível Group.
