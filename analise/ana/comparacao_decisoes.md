@@ -33,7 +33,7 @@ Decisões de escopo e limpeza em que o `01_exploratoria.ipynb` (Ana) e os notebo
 | `noites` | Faixas: até 1 (zero noites junto), 2–3, 4–7 e mais de 7 | Dicionário: as mesmas faixas. Notebook 03: zero noites numa faixa própria | igual ao dicionário |
 | `meal` | Testar com quatro níveis: BB (referência), com pensão (HB e FB), SC e Undefined | Testar: sem refeição (SC e Undefined) × com refeição | diferente |
 | `arrival_date_month` | Duas temporadas: jul–ago × resto do ano. Só jul–ago fica acima nos dois anos (35,0% e 30,7%); em 2016, abr–jun (25,9%) e set–mar (26,9%) não se separam | Três temporadas: jul–ago, abr–jun e set–mar | diferente |
-| `customer_type` | Testar; Group (348 reservas, 12,6%) junta com Contract em "contrato ou grupo". A seção 8 confere se acrescenta algo ao segmento | Entra | diferente no nível Group |
+| `customer_type` | A decidir na seção 8. Group (348 reservas, 12,6%) não se parece com nenhum nível. Possibilidades: juntar com Contract (taxa mais próxima, 22,4%), juntar com Transient-Party (conceito mais próximo, 24,1%), deixar separado ou tirar a variável (V de 0,048; repete parte do segmento) | Entra | a decidir |
 | `company` | Testar "paga por empresa": nos grupos, 4,8% de cancelamento com empresa (625 reservas), contra 34,0% sem | Sai: quase toda vazia | diferente |
 | `agent` | Sai: 275 códigos anônimos, embora separem reservas do mesmo segmento (agência online: de 13,8% a 38,6%) | Sai por ora | igual |
 
@@ -47,3 +47,4 @@ Decisões de escopo e limpeza em que o `01_exploratoria.ipynb` (Ana) e os notebo
 6. **Criança e bebê:** `com_crianca` com ou sem os bebês.
 7. **Temporadas:** duas (jul–ago × resto) ou três.
 8. **`company`:** testar "paga por empresa" ou deixar fora.
+9. **`customer_type`:** entra ou sai (seção 8); se entrar, o destino do nível Group.
