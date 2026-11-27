@@ -49,7 +49,7 @@ Decisões de escopo e limpeza em que os notebooks da Ana (`01_exploratoria.ipynb
 
 1. **`children` vazio:** remover ou preencher com 0? São só 4 reservas: a escolha não muda o modelo, mas o `04_preparacao` precisa de uma regra só.
 2. **Sem hóspede, diária negativa e zero noites:** aplicar a remoção no `04_preparacao`. Nas duas primeiras, as propostas apontam para o mesmo lado; a remoção das zero noites é nova (o dicionário junta com 1 noite, e o notebook 03 deixa numa faixa própria).
-3. **Faixas de antecedência e de noites:** adotar os cortes da árvore de decisão (notebook 02, seção 3.1) no lugar dos do `TODO.md` e do dicionário.
+3. **Faixas de antecedência e de noites:** adotar os cortes da árvore de decisão (notebook 02, seções 3.1 e 3.2) no lugar dos do `TODO.md` e do dicionário.
 4. **`meal`:** quatro níveis (Undefined separado) ou sem refeição × com refeição. Com a junção, efeitos opostos dos dois hotéis se misturam.
 5. **`previous_cancellations`:** tirar do modelo ou manter em teste? Se ficar em teste, conferir o sinal do coeficiente também no teste (2017).
 6. **Criança e bebê:** `com_crianca` com ou sem os bebês.
