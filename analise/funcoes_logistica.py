@@ -254,8 +254,9 @@ def logito_por_faixa(base, variavel, n_faixas=10, limites=None, y='is_canceled')
 
     Retorna
     -------
-    DataFrame da taxa_por_nivel, com a coluna x (mediana da variável na faixa) e o
-    intervalo de confiança também na escala do logito (logito_inf, logito_sup).
+    DataFrame da taxa_por_nivel, com a coluna mediana (mediana da variável na faixa),
+    o intervalo de confiança também na escala do logito (logito_inf, logito_sup) e,
+    nas faixas por quantis, a coluna decil (ou quantil) com o número da faixa, de 1 em diante.
     """
     if limites is None:
         faixa = pd.qcut(base[variavel], n_faixas, duplicates='drop')
@@ -263,7 +264,9 @@ def logito_por_faixa(base, variavel, n_faixas=10, limites=None, y='is_canceled')
         faixa = pd.cut(base[variavel], limites)
     dados = base.assign(_faixa=faixa)
     tabela = taxa_por_nivel(dados, '_faixa', y=y)
-    tabela['x'] = dados.groupby('_faixa', observed=True)[variavel].median()
+    tabela['mediana'] = dados.groupby('_faixa', observed=True)[variavel].median()
+    if limites is None:
+        tabela.insert(0, 'decil' if n_faixas == 10 else 'quantil', range(1, len(tabela) + 1))
     ic = tabela[['ic_inf', 'ic_sup']].clip(1e-4, 1 - 1e-4)
     tabela['logito_inf'] = np.log(ic['ic_inf'] / (1 - ic['ic_inf']))
     tabela['logito_sup'] = np.log(ic['ic_sup'] / (1 - ic['ic_sup']))
@@ -271,7 +274,7 @@ def logito_por_faixa(base, variavel, n_faixas=10, limites=None, y='is_canceled')
     return tabela
 
 
-def grafico_logito(tabela, titulo='', rotulo_x='', taxa_geral=None, ax=None):
+def grafico_logito(tabela, titulo='', rotulo_x='', taxa_geral=None, posicao=None, ax=None):
     """Logito empírico de cada faixa contra a mediana da faixa (saída de logito_por_faixa).
 
     Pontos com barras do intervalo de confiança, ligados por uma linha fina. Se o
@@ -284,6 +287,9 @@ def grafico_logito(tabela, titulo='', rotulo_x='', taxa_geral=None, ax=None):
     titulo, rotulo_x : str
     taxa_geral : float, opcional
         Taxa da base, desenhada como linha de referência (convertida para logito).
+    posicao : sequência, opcional
+        Posição horizontal de cada ponto. Por padrão, a mediana da faixa. Para contagens
+        com cauda juntada (por exemplo, 4+), use 0, 1, 2... e rotule o eixo no notebook.
     ax : eixo do matplotlib, opcional
 
     Retorna
@@ -293,8 +299,9 @@ def grafico_logito(tabela, titulo='', rotulo_x='', taxa_geral=None, ax=None):
     if ax is None:
         _, ax = plt.subplots(figsize=(6, 3.8))
     erro = [tabela['logito'] - tabela['logito_inf'], tabela['logito_sup'] - tabela['logito']]
-    ax.plot(tabela['x'], tabela['logito'], color=CORES['principal'], linewidth=1, alpha=0.5)
-    ax.errorbar(tabela['x'], tabela['logito'], yerr=erro, fmt='o', markersize=5, capsize=3,
+    x = tabela['mediana'] if posicao is None else list(posicao)
+    ax.plot(x, tabela['logito'], color=CORES['principal'], linewidth=1, alpha=0.5)
+    ax.errorbar(x, tabela['logito'], yerr=erro, fmt='o', markersize=5, capsize=3,
                 color=CORES['principal'], label='logito (IC 95%)')
     if taxa_geral is not None:
         ax.axhline(np.log(taxa_geral / (1 - taxa_geral)), color=CORES['referencia'], linestyle='--',
