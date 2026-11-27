@@ -35,7 +35,14 @@ Decisões de escopo e limpeza em que o `01_exploratoria.ipynb` (Ana) e os notebo
 | `arrival_date_month` | Duas temporadas: jul–ago × resto do ano. Só jul–ago fica acima nos dois anos (35,0% e 30,7%); em 2016, abr–jun (25,9%) e set–mar (26,9%) não se separam | Três temporadas: jul–ago, abr–jun e set–mar | diferente |
 | `customer_type` | A decidir na seção 8. Group (348 reservas, 12,6%) não se parece com nenhum nível. Possibilidades: juntar com Contract (taxa mais próxima, 22,4%), juntar com Transient-Party (conceito mais próximo, 24,1%), deixar separado ou tirar a variável (V de 0,048; repete parte do segmento) | Entra | a decidir |
 | `company` | Testar "paga por empresa": nos grupos, 4,8% de cancelamento com empresa (625 reservas), contra 34,0% sem | Sai: quase toda vazia | diferente |
+| `adr` | Em euros, não serve: a relação muda em 2017 (acima de 129, de cerca de 31% no treino para 38% a 40% no teste) e o preço sobe (mediana do urbano de 96 para 114,4). A seção 8 decide se entra | Entra como número | diferente |
 | `agent` | Sai: 275 códigos anônimos, embora separem reservas do mesmo segmento (agência online: de 13,8% a 38,6%) | Sai por ora | igual |
+
+## Leituras
+
+| Ponto | Ana | Notebooks do grupo | Situação |
+| --- | --- | --- | --- |
+| Alta de 2017 | Cerca de 70% vem do perfil das reservas: com as taxas do treino em cada grupo (hotel × segmento × antecedência × temporada) e o perfil de 2017, a taxa esperada é 30,2%, contra 26,6% no treino e 31,8% real | Notebook 03: "a alta é sobretudo comportamento, concentrada na agência online com antecedência longa" | diferente; conferir se a diferença vem dos grupos usados em cada decomposição |
 
 ## Para fechar com o grupo
 
