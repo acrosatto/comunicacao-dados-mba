@@ -565,3 +565,118 @@ def cortes_por_ganho(base, variavel, min_faixa=0.005, ganho_minimo=0.0005, max_f
         if parou and len(linhas) >= 3 and all(l['aceito'] == 'não' for l in linhas[-2:]):
             break                                             # mostra só dois passos depois da parada
     return pd.DataFrame(linhas).set_index('faixas')
+
+
+def desenhar_arvore(base, variavel, n_faixas, unidade, titulo, ultima='mais de', min_faixa=0.005, y='is_canceled'):
+    """Desenha a árvore de decisão (ganho de informação) que corta uma variável em faixas.
+
+    Cada pergunta mostra o corte ("até 8 dias?"), a parcela das reservas que chega até ela,
+    a taxa de cancelamento e o ganho de informação do corte. As folhas, embaixo, são as
+    faixas finais, com a parcela das reservas e a taxa de cancelamento de cada uma.
+
+    Parâmetros
+    ----------
+    base : DataFrame
+    variavel : str
+        Coluna numérica de valores inteiros.
+    n_faixas : int
+        Número de faixas (folhas) da árvore.
+    unidade : str
+        Unidade no plural, para os textos (por exemplo, 'dias' ou 'noites'). O singular
+        ('dia', 'noite') é usado quando o valor é 1.
+    titulo : str
+    ultima : str
+        Como nomear a última faixa: 'mais de' ("mais de 257 dias") ou 'ou mais'
+        ("4 noites ou mais").
+    min_faixa : float
+        Parcela mínima da base em cada faixa.
+    y : str
+        Coluna 0/1 do evento.
+
+    Retorna
+    -------
+    Lista dos cortes, em ordem (um corte em c quer dizer "até c" e "acima de c").
+    """
+    from sklearn.tree import DecisionTreeClassifier
+
+    arvore = DecisionTreeClassifier(criterion='entropy', max_leaf_nodes=n_faixas,
+                                    min_samples_leaf=int(np.ceil(min_faixa * len(base))), random_state=0)
+    arvore.fit(base[[variavel]], base[y])
+    t = arvore.tree_
+    total = t.n_node_samples[0]
+
+    def entropia(p):
+        p = min(max(p, 1e-12), 1 - 1e-12)
+        return -(p * np.log2(p) + (1 - p) * np.log2(1 - p))
+
+    def taxa(no):
+        valor = t.value[no][0]
+        return valor[1] / valor.sum()
+
+    def ganho(no):
+        e, d = t.children_left[no], t.children_right[no]
+        n, ne, nd = t.n_node_samples[no], t.n_node_samples[e], t.n_node_samples[d]
+        return n / total * (entropia(taxa(no)) - ne / n * entropia(taxa(e)) - nd / n * entropia(taxa(d)))
+
+    # posições: folhas lado a lado, na ordem dos valores; cada pergunta no meio dos seus ramos
+    posicao, profundidade, folhas = {}, {}, []
+
+    def percorrer(no, nivel, minimo, maximo):
+        profundidade[no] = nivel
+        if t.children_left[no] == -1:
+            posicao[no] = len(folhas)
+            folhas.append((no, minimo, maximo))
+            return
+        corte = int(np.floor(t.threshold[no]))
+        percorrer(t.children_left[no], nivel + 1, minimo, corte)
+        percorrer(t.children_right[no], nivel + 1, corte + 1, maximo)
+        posicao[no] = (posicao[t.children_left[no]] + posicao[t.children_right[no]]) / 2
+
+    percorrer(0, 0, None, None)
+    altura = max(profundidade.values())
+
+    singular = unidade[:-1] if unidade.endswith('s') else unidade
+
+    def com_unidade(valor):
+        return f'{valor} {singular if valor == 1 else unidade}'
+
+    def nome_faixa(minimo, maximo):
+        if minimo is None:
+            return com_unidade(maximo) if maximo == 0 else f'até {com_unidade(maximo)}'
+        if maximo is None:
+            return f'mais de {com_unidade(minimo - 1)}' if ultima == 'mais de' else f'{com_unidade(minimo)} ou mais'
+        return com_unidade(minimo) if minimo == maximo else f'{minimo} a {maximo} {unidade}'
+
+    def pct(v):
+        return f'{v:.1%}'.replace('.', ',')
+
+    fig, ax = plt.subplots(figsize=(12, 1.6 * (altura + 1) + 0.8))
+    caixa_pergunta = dict(boxstyle='round,pad=0.5', facecolor='white', edgecolor=CORES['referencia'])
+    caixa_folha = dict(boxstyle='round,pad=0.5', facecolor='#eef1f8', edgecolor=CORES['principal'])
+    for no in posicao:
+        x, yy = posicao[no], -profundidade[no]
+        if t.children_left[no] != -1:
+            for filho, rotulo in [(t.children_left[no], 'sim'), (t.children_right[no], 'não')]:
+                xf, yf = posicao[filho], -profundidade[filho]
+                ax.plot([x, xf], [yy, yf], color=CORES['referencia'], linewidth=1, zorder=1)
+                ax.text((x + xf) / 2, (yy + yf) / 2, rotulo, fontsize=9, color='#555555', ha='center', va='center',
+                        bbox=dict(facecolor='white', edgecolor='none', pad=1), zorder=2)
+            corte = int(np.floor(t.threshold[no]))
+            if corte == 0:
+                pergunta = 'no mesmo dia (0 dias)?' if unidade == 'dias' else f'zero {unidade}?'
+            else:
+                pergunta = f'até {com_unidade(corte)}?'
+            ganho_txt = f'{ganho(no):.4f}'.replace('.', ',')
+            texto = (f'{pergunta}\n{pct(t.n_node_samples[no] / total)} das reservas · cancela {pct(taxa(no))}\n'
+                     f'ganho do corte: {ganho_txt}')
+            ax.text(x, yy, texto, fontsize=9, ha='center', va='center', bbox=caixa_pergunta, zorder=3, color='#333333')
+    for no, minimo, maximo in folhas:
+        x, yy = posicao[no], -profundidade[no]
+        texto = f'{nome_faixa(minimo, maximo)}\n{pct(t.n_node_samples[no] / total)} das reservas\ncancela {pct(taxa(no))}'
+        ax.text(x, yy, texto, fontsize=9, ha='center', va='center', bbox=caixa_folha, zorder=3, color='#333333')
+    ax.set_xlim(-0.6, len(folhas) - 0.4)
+    ax.set_ylim(-altura - 0.6, 0.6)
+    ax.axis('off')
+    ax.set_title(titulo)
+    plt.show()
+    return sorted(int(np.floor(c)) for c in t.threshold if c != -2)
