@@ -447,3 +447,121 @@ def usar_tabelas_simples(casas=4):
     if ipython is not None:
         ipython.display_formatter.formatters['text/html'].for_type(
             pd.DataFrame, lambda tabela: tabela_simples(tabela, casas).to_html())
+
+
+# -----------------------------------------------------------------------------
+# Escolha das faixas
+# -----------------------------------------------------------------------------
+def comparar_cortes(base, variavel, opcoes, formulas=None, y='is_canceled'):
+    """Compara opções de faixas para uma variável numérica pelo AIC.
+
+    Cada opção vira uma regressão logística só com aquela variável, em faixas. O AIC
+    mede o ajuste e pune cada coeficiente a mais: quanto menor, melhor. Uma diferença
+    de AIC abaixo de uns 2 pontos não distingue duas opções. O BIC pune cada coeficiente
+    com mais força (cresce com o tamanho da base) e favorece opções mais simples.
+
+    Parâmetros
+    ----------
+    base : DataFrame
+    variavel : str
+        Coluna numérica.
+    opcoes : dict
+        {nome da opção: limites das faixas}, no formato do pd.cut (fechadas à direita).
+    formulas : dict, opcional
+        {nome: fórmula} de outros modelos para comparar, como a variável como número
+        ('is_canceled ~ lead_time') ou o modelo sem nenhuma variável ('is_canceled ~ 1').
+    y : str
+        Coluna 0/1 do evento.
+
+    Retorna
+    -------
+    DataFrame ordenado pelo AIC, com n_coeficientes, AIC e BIC (e a diferença de cada um
+    para a melhor opção),
+    menor_faixa (parcela da base na menor faixa) e a taxa de cada faixa, em ordem.
+    """
+    import statsmodels.api as sm
+    import statsmodels.formula.api as smf
+
+    def ajustar(formula, dados):
+        modelo = smf.glm(formula, data=dados, family=sm.families.Binomial()).fit()
+        bic = -2 * modelo.llf + (modelo.df_model + 1) * np.log(len(dados))
+        return modelo.aic, bic, int(modelo.df_model)
+
+    linhas = []
+    for nome, formula in (formulas or {}).items():
+        aic, bic, n_coef = ajustar(formula, base)
+        linhas.append({'opcao': nome, 'n_coeficientes': n_coef, 'AIC': aic, 'BIC': bic,
+                       'menor_faixa': np.nan, 'taxa_por_faixa': ''})
+    for nome, limites in opcoes.items():
+        faixa = pd.cut(base[variavel], limites)
+        aic, bic, n_coef = ajustar(f'{y} ~ C(_faixa)', base.assign(_faixa=faixa.astype(str)))
+        grupos = base.groupby(faixa, observed=True)[y]
+        linhas.append({'opcao': nome, 'n_coeficientes': n_coef, 'AIC': aic, 'BIC': bic,
+                       'menor_faixa': grupos.size().min() / len(base),
+                       'taxa_por_faixa': ' / '.join(f'{t:.1%}'.replace('.', ',') for t in grupos.mean())})
+    tabela = pd.DataFrame(linhas).sort_values('AIC')
+    tabela.insert(3, 'dif_AIC', tabela['AIC'] - tabela['AIC'].min())
+    tabela.insert(5, 'dif_BIC', tabela['BIC'] - tabela['BIC'].min())
+    return tabela.set_index('opcao').round({'AIC': 1, 'dif_AIC': 1, 'BIC': 1, 'dif_BIC': 1})
+
+
+def cortes_por_ganho(base, variavel, min_faixa=0.005, ganho_minimo=0.0005, max_faixas=15, y='is_canceled'):
+    """Faixas escolhidas por uma árvore de decisão com ganho de informação, um corte por vez.
+
+    A árvore testa todos os cortes possíveis da variável e escolhe o que dá o maior ganho
+    de informação: a maior queda na entropia (em bits) do y, ponderada pelo tamanho dos
+    grupos. A cada passo, ela pode fazer mais um corte. O processo para quando o próximo
+    corte traz menos que `ganho_minimo` de ganho, ou quando um corte criaria uma faixa
+    com menos que `min_faixa` da base.
+
+    Parâmetros
+    ----------
+    base : DataFrame
+    variavel : str
+        Coluna numérica (de valores inteiros, como dias ou noites).
+    min_faixa : float
+        Parcela mínima da base em cada faixa.
+    ganho_minimo : float
+        Ganho de informação mínimo (em bits) para aceitar mais um corte.
+    max_faixas : int
+        Limite de segurança para o número de faixas.
+    y : str
+        Coluna 0/1 do evento.
+
+    Retorna
+    -------
+    DataFrame com um passo por linha: número de faixas, o corte novo, o ganho que ele
+    trouxe, o ganho acumulado, se o corte foi aceito e os cortes até ali. Um corte em c
+    quer dizer "até c" e "acima de c".
+    """
+    from sklearn.tree import DecisionTreeClassifier
+
+    def entropia(p):
+        p = np.clip(p, 1e-12, 1 - 1e-12)
+        return -(p * np.log2(p) + (1 - p) * np.log2(1 - p))
+
+    def entropia_media(cortes):
+        faixa = pd.cut(base[variavel], [-np.inf] + list(cortes) + [np.inf])
+        grupos = base.groupby(faixa, observed=True)[y]
+        return float((grupos.size() / len(base) * entropia(grupos.mean())).sum())
+
+    inicial = float(entropia(base[y].mean()))
+    linhas, anteriores, parou = [], [], False
+    for n_faixas in range(2, max_faixas + 1):
+        arvore = DecisionTreeClassifier(criterion='entropy', max_leaf_nodes=n_faixas,
+                                        min_samples_leaf=int(np.ceil(min_faixa * len(base))), random_state=0)
+        arvore.fit(base[[variavel]], base[y])
+        cortes = sorted(int(np.floor(t)) for t in arvore.tree_.threshold if t != -2)
+        if len(cortes) < n_faixas - 1:
+            break                                             # a árvore não acha mais cortes válidos
+        novo = [c for c in cortes if c not in anteriores]
+        ganho = (inicial - entropia_media(cortes)) - (inicial - entropia_media(anteriores))
+        aceito = (not parou) and ganho >= ganho_minimo
+        parou = parou or not aceito
+        linhas.append({'faixas': n_faixas, 'corte_novo': ', '.join(map(str, novo)), 'ganho': ganho,
+                       'ganho_acumulado': inicial - entropia_media(cortes), 'aceito': 'sim' if aceito else 'não',
+                       'cortes': ', '.join(map(str, cortes))})
+        anteriores = cortes
+        if parou and len(linhas) >= 3 and all(l['aceito'] == 'não' for l in linhas[-2:]):
+            break                                             # mostra só dois passos depois da parada
+    return pd.DataFrame(linhas).set_index('faixas')
