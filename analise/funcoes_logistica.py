@@ -577,6 +577,67 @@ def cortes_por_ganho(base, variavel, min_faixa=0.005, ganho_minimo=0.0005, max_f
     return pd.DataFrame(linhas).set_index('faixas')
 
 
+def conferir_cortes_por_periodo(base, variavel, passos, periodo='arrival_date_year', y='is_canceled'):
+    """Tira os cortes da árvore que não valem nos dois períodos da base.
+
+    Em cada par de faixas vizinhas, a faixa de cima precisa cancelar mais que a de baixo
+    nos dois períodos, ou menos nos dois. Se a ordem se inverte em algum par, sai, entre
+    os cortes que invertem, o de menor ganho de informação. A conferência se repete com
+    as faixas que sobram, até todos os cortes valerem nos dois períodos.
+
+    Parâmetros
+    ----------
+    base : DataFrame
+        Só os dados usados nas decisões (o treino), nunca o teste.
+    variavel : str
+        Coluna numérica de valores inteiros.
+    passos : DataFrame
+        Saída de cortes_por_ganho: usa os cortes aceitos e o ganho de cada um.
+    periodo : str
+        Coluna com os dois períodos comparados (por exemplo, o ano de chegada).
+    y : str
+        Coluna 0/1 do evento.
+
+    Retorna
+    -------
+    cortes : list
+        Os cortes que ficam, em ordem.
+    tabela : DataFrame
+        Uma linha por faixa em cada rodada: a taxa em cada período e se a ordem em
+        relação à faixa anterior é a mesma nos dois (sim ou não).
+    saidas : list
+        Uma frase por rodada que tirou um corte.
+    """
+    aceitos = passos[passos['aceito'] == 'sim']
+    ganho = {int(c): g for c, g in zip(aceitos['corte_novo'], aceitos['ganho'])}
+    cortes, tabelas, saidas = sorted(ganho), {}, []
+    minimo = int(base[variavel].min())
+
+    def nomes(cortes):
+        limites = [minimo - 1] + cortes
+        rotulos = [str(b) if a + 1 == b else f'{a + 1}–{b}' for a, b in zip(limites[:-1], limites[1:])]
+        return rotulos + [f'mais de {cortes[-1]}']
+
+    rodada = 1
+    while True:
+        faixa = pd.cut(base[variavel], [-np.inf] + cortes + [np.inf], labels=nomes(cortes))
+        t = base.groupby([faixa, periodo], observed=True)[y].mean().unstack()
+        sobe = np.sign(t.diff())
+        igual = (sobe.iloc[:, 0] == sobe.iloc[:, 1]).to_numpy()
+        t.columns = [f'taxa_{c}' for c in t.columns]
+        t['mesma_ordem'] = ['' if i == 0 else ('sim' if ok else 'não') for i, ok in enumerate(igual)]
+        tabelas[rodada] = t
+        invertem = [c for c, ok in zip(cortes, igual[1:]) if not ok]
+        if not invertem:
+            break
+        sai = min(invertem, key=ganho.get)
+        saidas.append(f'Rodada {rodada}: o corte em {sai} inverte a ordem entre os períodos e sai.')
+        cortes.remove(sai)
+        rodada += 1
+    tabela = pd.concat(tabelas, names=['rodada', 'faixa'])
+    return cortes, tabela, saidas
+
+
 def desenhar_arvore(base, variavel, n_faixas, unidade, titulo, ultima='mais de', examinar=(), min_faixa=0.005,
                     y='is_canceled'):
     """Desenha a árvore de decisão (ganho de informação) que corta uma variável em faixas.
@@ -648,6 +709,7 @@ def desenhar_arvore(base, variavel, n_faixas, unidade, titulo, ultima='mais de',
 
     percorrer(0, 0, int(base[variavel].min()), None)   # a primeira faixa começa no menor valor dos dados
     altura = max(profundidade.values())
+    fonte = 9 if len(folhas) <= 6 else 7.5   # com mais de 6 folhas, as caixas vizinhas se encostariam
 
     singular = unidade[:-1] if unidade.endswith('s') else unidade
 
@@ -689,12 +751,12 @@ def desenhar_arvore(base, variavel, n_faixas, unidade, titulo, ultima='mais de',
                 texto += '\nexaminado abaixo'
                 destacados.update([t.children_left[no], t.children_right[no]])
             caixa = dict(caixa_pergunta, linestyle='--') if destaque else caixa_pergunta
-            ax.text(x, yy, texto, fontsize=9, ha='center', va='center', bbox=caixa, zorder=3, color='#333333')
+            ax.text(x, yy, texto, fontsize=fonte, ha='center', va='center', bbox=caixa, zorder=3, color='#333333')
     for no, minimo, maximo in folhas:
         x, yy = posicao[no], -profundidade[no]
         texto = f'{nome_faixa(minimo, maximo)}\n{pct(t.n_node_samples[no] / total)} das reservas\ncancela {pct(taxa(no))}'
         caixa = dict(caixa_folha, linestyle='--', facecolor='white') if no in destacados else caixa_folha
-        ax.text(x, yy, texto, fontsize=9, ha='center', va='center', bbox=caixa, zorder=3, color='#333333')
+        ax.text(x, yy, texto, fontsize=fonte, ha='center', va='center', bbox=caixa, zorder=3, color='#333333')
     ax.set_xlim(-0.6, len(folhas) - 0.4)
     ax.set_ylim(-altura - 0.6, 0.6)
     ax.axis('off')

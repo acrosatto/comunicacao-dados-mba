@@ -28,22 +28,23 @@ Decisões de escopo e limpeza em que os notebooks da Ana (`01_exploratoria.ipynb
 
 | Variável | Ana | Notebooks do grupo | Situação |
 | --- | --- | --- | --- |
-| `previous_cancellations` | Sai: 1 cancelamento anterior cancela 92,5% no treino (79,9% dessas reservas são de 2015) e 17,6% no teste, contra 32,0% sem cancelamento anterior. A relação muda de sentido em 2017 | Testar: já cancelou × nunca cancelou | diferente |
-| `babies` | Sai: com bebê cancela 20,8%, contra 26,8% sem; sentido oposto ao de `children`, então não junta com ela | Sai: quase sempre zero. A derivada `com_crianca` (notebook 03) soma crianças e bebês | igual para `babies`; diferente na derivada |
-| `lead_time` | Faixas pela árvore de decisão (ganho de informação): 0, 1–8, 9–25, 26–257, 258–315 e mais de 315 dias. A proposta do `TODO.md` fica 261,5 pontos de BIC atrás. Acima de 315 dias a taxa cai (blocos de grupos e operadoras); o notebook 02, seção 4, confere se o corte continua com o segmento no modelo | `TODO.md` e dicionário: até 7, 8–30, 31–90, 91–180 e mais de 180 dias | diferente |
+| `previous_cancellations` | A refazer (notebook 02, seção 3.8). A proposta anterior (sair, porque a relação se invertia em 2017) usava o teste e foi retirada. No treino, a ordem se mantém: 1 cancelamento anterior cancela 98,4% em 2015 e 69,4% em 2016, contra 16,1% e 27,1% sem; 79,9% dessas reservas são de 2015 | Testar: já cancelou × nunca cancelou | a decidir |
+| `children` | A refazer (notebook 02, seção 3.5). Os três níveis (0, 1 e 2 ou mais) não valem nos dois anos do treino: 1 criança cancela menos que nenhuma em 2015 (16,4% × 24,8%) e mais em 2016 (31,8% × 26,8%). "Com criança × sem" fica 35,7 pontos de BIC atrás da melhor opção | `com_crianca` (notebook 03): com × sem, somando crianças e bebês | a decidir |
+| `babies` | Sai como variável própria: a árvore não faz nenhum corte (ganho de 0,00014, abaixo do mínimo de 0,0005), e "com bebê × sem" fica só 1,5 ponto de BIC à frente do modelo vazio. Com bebê cancela menos (20,8% contra 26,8%), mas 84,7% dessas reservas fizeram pedido especial: o notebook 02, seção 4, testa somar os bebês às crianças | Sai: quase sempre zero. A derivada `com_crianca` (notebook 03) soma crianças e bebês | igual para `babies`; a soma com as crianças fica para a seção 4 |
+| `lead_time` | Faixas pela árvore de decisão (ganho de informação), conferidas em 2015 e 2016: 0, 1–8, 9–25 e mais de 25 dias. Os cortes em 257 e 315 dias invertem a ordem entre os anos (acima de 315 dias: 82,6% em 2015, 18,8% em 2016) e saem. A proposta do `TODO.md` fica 62,0 pontos de BIC atrás | `TODO.md` e dicionário: até 7, 8–30, 31–90, 91–180 e mais de 180 dias | diferente |
 | `noites` | Faixas pela árvore de decisão: 1, 2–3 e 4 ou mais (as zero noites saem da base). Separar 4–7 de mais de 7 não se sustenta pelo BIC | Dicionário: até 1 (zero noites junto), 2–3, 4–7 e mais de 7. Notebook 03: zero noites numa faixa própria | quase igual ao dicionário |
 | `meal` | Testar com quatro níveis: BB (referência), com pensão (HB e FB), SC e Undefined | Testar: sem refeição (SC e Undefined) × com refeição | diferente |
 | `arrival_date_month` | Duas temporadas: jul–ago × resto do ano. Só jul–ago fica acima nos dois anos (35,2% e 30,9%); em 2016, abr–jun (26,1%) e set–mar (27,1%) não se separam | Três temporadas: jul–ago, abr–jun e set–mar | diferente |
 | `customer_type` | A decidir no notebook 02, seção 4. Group (344 reservas, 12,8%) não se parece com nenhum nível. Possibilidades: juntar com Contract (taxa mais próxima, 22,5%), juntar com Transient-Party (conceito mais próximo, 24,2%), deixar separado ou tirar a variável (V de 0,049; repete parte do segmento) | Entra | a decidir |
 | `company` | Testar "paga por empresa": nos grupos, 4,7% de cancelamento com empresa (614 reservas), contra 34,1% sem | Sai: quase toda vazia | diferente |
-| `adr` | Em euros, não serve: a relação muda em 2017 (acima de 130, de cerca de 31% no treino para 38% a 40% no teste) e o preço sobe (mediana do urbano de 96,2 para 114,4). O notebook 02, seção 4, decide se entra | Entra como número | diferente |
+| `adr` | Candidata em 6 faixas da árvore de decisão, conferidas em 2015 e 2016: até 59, 60–64, 65–67, 68–114, 115 e mais de 115 € (diária arredondada para o euro). Os cortes em 61 e 63 € invertem a ordem entre os anos e saem. As faixas estreitas seguem tarifas de grupos, operadoras e empresas (por exemplo, 62 € em blocos de grupos). O preço sobe em 2017 (mediana do urbano de 96,2 para 114,4): faixas em euros envelhecem. O notebook 02, seção 4, decide se entra | Entra como número (858,0 pontos de BIC atrás das 6 faixas) | diferente |
 | `agent` | Sai: 275 códigos anônimos, embora separem reservas do mesmo segmento (agência online: de 13,9% a 38,7%) | Sai por ora | igual |
 
 ## Leituras
 
 | Ponto | Ana | Notebooks do grupo | Situação |
 | --- | --- | --- | --- |
-| Alta de 2017 | Cerca de 70% vem do perfil das reservas: com as taxas do treino em cada grupo (hotel × segmento × antecedência × temporada) e o perfil de 2017, a taxa esperada é 30,3%, contra 26,8% no treino e 31,9% real | Notebook 03: "a alta é sobretudo comportamento, concentrada na agência online com antecedência longa" | diferente; conferir se a diferença vem dos grupos usados em cada decomposição |
+| Alta de 2017 | Sai do notebook 02: a decomposição usava o cancelamento do teste. Fica para o `03_modelo`, depois da avaliação | Notebook 03: "a alta é sobretudo comportamento, concentrada na agência online com antecedência longa", analisada antes do modelo | diferente: o grupo usa o teste antes do modelo |
 
 ## Para fechar com o grupo
 
@@ -51,8 +52,9 @@ Decisões de escopo e limpeza em que os notebooks da Ana (`01_exploratoria.ipynb
 2. **Sem hóspede, diária negativa e zero noites:** aplicar a remoção no `04_preparacao`. Nas duas primeiras, as propostas apontam para o mesmo lado; a remoção das zero noites é nova (o dicionário junta com 1 noite, e o notebook 03 deixa numa faixa própria).
 3. **Faixas de antecedência e de noites:** adotar os cortes da árvore de decisão (notebook 02, seções 3.1 e 3.2) no lugar dos do `TODO.md` e do dicionário.
 4. **`meal`:** quatro níveis (Undefined separado) ou sem refeição × com refeição. Com a junção, efeitos opostos dos dois hotéis se misturam.
-5. **`previous_cancellations`:** tirar do modelo ou manter em teste? Se ficar em teste, conferir o sinal do coeficiente também no teste (2017).
-6. **Criança e bebê:** `com_crianca` com ou sem os bebês.
+5. **`previous_cancellations`:** tirar do modelo ou manter? A decisão é refeita no notebook 02, seção 3.8, sem o teste.
+6. **Criança e bebê:** a forma das crianças é refeita no notebook 02, seção 3.5; somar ou não os bebês fica para a seção 4.
 7. **Temporadas:** duas (jul–ago × resto) ou três.
 8. **`company`:** testar "paga por empresa" ou deixar fora.
 9. **`customer_type`:** entra ou sai (notebook 02, seção 4); se entrar, o destino do nível Group.
+10. **Uso do teste:** nenhuma escolha de cortes ou de variáveis usa o teste (2017); a estabilidade é conferida entre 2015 e 2016, dentro do treino. Os notebooks do grupo usam o teste antes do modelo (notebook 03, decomposição da alta de 2017).
