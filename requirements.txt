@@ -8,3 +8,6 @@ scikit-learn==1.9.1
 
 # Para rodar os notebooks no Jupyter ou no VS Code
 ipykernel==7.4.0
+# Para executar um notebook inteiro pelo terminal e salvar as saídas:
+#   jupyter nbconvert --to notebook --execute --inplace <notebook>.ipynb
+nbconvert==7.17.2
