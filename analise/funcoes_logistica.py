@@ -356,7 +356,8 @@ def preparar_base(hotel):
     """Aplica o escopo e a limpeza propostos no notebook 01 (seções 4 e 5).
 
     Escopo: só reservas sem depósito (No Deposit). Limpeza: tira as reservas com
-    `children` vazio, as sem hóspede e as diárias fora de 0 a 1.000. Acrescenta as
+    `children` vazio, as sem hóspede, as diárias fora de 0 a 1.000 e as reservas com
+    zero noites (notebook 01, seção 4.4). Acrescenta as
     colunas derivadas usadas na análise: total de noites, total de hóspedes e se a
     linha tem gêmea idêntica na base original.
 
@@ -382,6 +383,7 @@ def preparar_base(hotel):
         'children preenchido': hotel['children'].notna(),
         'com hóspede': hospedes > 0,
         'diária entre 0 e 1.000': hotel['adr'].between(0, 1000),
+        'com pelo menos uma noite': noites > 0,
     }
     manter = pd.Series(True, index=hotel.index)
     ficam = {'base inteira': len(hotel)}
@@ -644,7 +646,7 @@ def desenhar_arvore(base, variavel, n_faixas, unidade, titulo, ultima='mais de',
         percorrer(t.children_right[no], nivel + 1, corte + 1, maximo)
         posicao[no] = (posicao[t.children_left[no]] + posicao[t.children_right[no]]) / 2
 
-    percorrer(0, 0, None, None)
+    percorrer(0, 0, int(base[variavel].min()), None)   # a primeira faixa começa no menor valor dos dados
     altura = max(profundidade.values())
 
     singular = unidade[:-1] if unidade.endswith('s') else unidade
