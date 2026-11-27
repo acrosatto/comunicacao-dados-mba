@@ -567,7 +567,8 @@ def cortes_por_ganho(base, variavel, min_faixa=0.005, ganho_minimo=0.0005, max_f
     return pd.DataFrame(linhas).set_index('faixas')
 
 
-def desenhar_arvore(base, variavel, n_faixas, unidade, titulo, ultima='mais de', min_faixa=0.005, y='is_canceled'):
+def desenhar_arvore(base, variavel, n_faixas, unidade, titulo, ultima='mais de', examinar=(), min_faixa=0.005,
+                    y='is_canceled'):
     """Desenha a árvore de decisão (ganho de informação) que corta uma variável em faixas.
 
     Cada pergunta mostra o corte ("até 8 dias?"), a parcela das reservas que chega até ela,
@@ -588,6 +589,9 @@ def desenhar_arvore(base, variavel, n_faixas, unidade, titulo, ultima='mais de',
     ultima : str
         Como nomear a última faixa: 'mais de' ("mais de 257 dias") ou 'ou mais'
         ("4 noites ou mais").
+    examinar : sequência de int
+        Cortes a destacar (borda tracejada e a nota "examinado abaixo"), junto com as
+        faixas que eles criam.
     min_faixa : float
         Parcela mínima da base em cada faixa.
     y : str
@@ -653,6 +657,7 @@ def desenhar_arvore(base, variavel, n_faixas, unidade, titulo, ultima='mais de',
     fig, ax = plt.subplots(figsize=(12, 1.6 * (altura + 1) + 0.8))
     caixa_pergunta = dict(boxstyle='round,pad=0.5', facecolor='white', edgecolor=CORES['referencia'])
     caixa_folha = dict(boxstyle='round,pad=0.5', facecolor='#eef1f8', edgecolor=CORES['principal'])
+    destacados = set()
     for no in posicao:
         x, yy = posicao[no], -profundidade[no]
         if t.children_left[no] != -1:
@@ -669,11 +674,17 @@ def desenhar_arvore(base, variavel, n_faixas, unidade, titulo, ultima='mais de',
             ganho_txt = f'{ganho(no):.4f}'.replace('.', ',')
             texto = (f'{pergunta}\n{pct(t.n_node_samples[no] / total)} das reservas · cancela {pct(taxa(no))}\n'
                      f'ganho do corte: {ganho_txt}')
-            ax.text(x, yy, texto, fontsize=9, ha='center', va='center', bbox=caixa_pergunta, zorder=3, color='#333333')
+            destaque = corte in examinar
+            if destaque:
+                texto += '\nexaminado abaixo'
+                destacados.update([t.children_left[no], t.children_right[no]])
+            caixa = dict(caixa_pergunta, linestyle='--') if destaque else caixa_pergunta
+            ax.text(x, yy, texto, fontsize=9, ha='center', va='center', bbox=caixa, zorder=3, color='#333333')
     for no, minimo, maximo in folhas:
         x, yy = posicao[no], -profundidade[no]
         texto = f'{nome_faixa(minimo, maximo)}\n{pct(t.n_node_samples[no] / total)} das reservas\ncancela {pct(taxa(no))}'
-        ax.text(x, yy, texto, fontsize=9, ha='center', va='center', bbox=caixa_folha, zorder=3, color='#333333')
+        caixa = dict(caixa_folha, linestyle='--', facecolor='white') if no in destacados else caixa_folha
+        ax.text(x, yy, texto, fontsize=9, ha='center', va='center', bbox=caixa, zorder=3, color='#333333')
     ax.set_xlim(-0.6, len(folhas) - 0.4)
     ax.set_ylim(-altura - 0.6, 0.6)
     ax.axis('off')
