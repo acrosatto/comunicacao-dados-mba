@@ -316,7 +316,7 @@ def grafico_logito(tabela, titulo='', rotulo_x='', taxa_geral=None, posicao=None
                    linewidth=1, label=f'taxa geral ({taxa_geral:.1%})'.replace('.', ','))
     ax.set_title(titulo)
     ax.set_xlabel(rotulo_x)
-    ax.set_ylabel('logito do cancelamento')
+    ax.set_ylabel('logito de p (p = taxa de cancelamento)')
     ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f'{v:g}'.replace('.', ',')))   # -0,5
     ax.legend(frameon=False, fontsize=9)
     return ax
