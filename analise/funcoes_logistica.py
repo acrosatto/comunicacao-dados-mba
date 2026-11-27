@@ -226,3 +226,81 @@ def contar_casos(base, casos, y='is_canceled'):
             'taxa': base.loc[condicao, y].mean() if condicao.any() else np.nan,
         }
     return pd.DataFrame.from_dict(linhas, orient='index')
+
+
+# -----------------------------------------------------------------------------
+# Linearidade no logito
+# -----------------------------------------------------------------------------
+def logito_por_faixa(base, variavel, n_faixas=10, limites=None, y='is_canceled'):
+    """Taxa e logito empírico por faixa de uma variável numérica, com a posição de cada faixa.
+
+    Serve para conferir se a variável pode entrar como número: na regressão logística,
+    o efeito é uma reta no logito. Se o logito das faixas cai numa reta contra o valor
+    típico de cada faixa, a variável entra como número; se não, vira faixas.
+
+    Parâmetros
+    ----------
+    base : DataFrame
+    variavel : str
+        Coluna numérica.
+    n_faixas : int
+        Número de faixas por quantis (decis por padrão). Usado quando `limites` é None.
+        Valores repetidos podem juntar quantis, e aí saem menos faixas.
+    limites : lista, opcional
+        Limites fixos das faixas, para contagens (por exemplo, [-1, 0, 1, 2, np.inf]).
+        Os intervalos são fechados à direita, como no pd.cut.
+    y : str
+        Coluna 0/1 do evento.
+
+    Retorna
+    -------
+    DataFrame da taxa_por_nivel, com a coluna x (mediana da variável na faixa) e o
+    intervalo de confiança também na escala do logito (logito_inf, logito_sup).
+    """
+    if limites is None:
+        faixa = pd.qcut(base[variavel], n_faixas, duplicates='drop')
+    else:
+        faixa = pd.cut(base[variavel], limites)
+    dados = base.assign(_faixa=faixa)
+    tabela = taxa_por_nivel(dados, '_faixa', y=y)
+    tabela['x'] = dados.groupby('_faixa', observed=True)[variavel].median()
+    ic = tabela[['ic_inf', 'ic_sup']].clip(1e-4, 1 - 1e-4)
+    tabela['logito_inf'] = np.log(ic['ic_inf'] / (1 - ic['ic_inf']))
+    tabela['logito_sup'] = np.log(ic['ic_sup'] / (1 - ic['ic_sup']))
+    tabela.index.name = variavel
+    return tabela
+
+
+def grafico_logito(tabela, titulo='', rotulo_x='', taxa_geral=None, ax=None):
+    """Logito empírico de cada faixa contra a mediana da faixa (saída de logito_por_faixa).
+
+    Pontos com barras do intervalo de confiança, ligados por uma linha fina. Se o
+    desenho é uma reta, a variável pode entrar como número.
+
+    Parâmetros
+    ----------
+    tabela : DataFrame
+        Saída de logito_por_faixa.
+    titulo, rotulo_x : str
+    taxa_geral : float, opcional
+        Taxa da base, desenhada como linha de referência (convertida para logito).
+    ax : eixo do matplotlib, opcional
+
+    Retorna
+    -------
+    O eixo do matplotlib.
+    """
+    if ax is None:
+        _, ax = plt.subplots(figsize=(6, 3.8))
+    erro = [tabela['logito'] - tabela['logito_inf'], tabela['logito_sup'] - tabela['logito']]
+    ax.plot(tabela['x'], tabela['logito'], color=CORES['principal'], linewidth=1, alpha=0.5)
+    ax.errorbar(tabela['x'], tabela['logito'], yerr=erro, fmt='o', markersize=5, capsize=3,
+                color=CORES['principal'], label='logito (IC 95%)')
+    if taxa_geral is not None:
+        ax.axhline(np.log(taxa_geral / (1 - taxa_geral)), color=CORES['referencia'], linestyle='--',
+                   linewidth=1, label=f'taxa geral ({taxa_geral:.1%})'.replace('.', ','))
+    ax.set_title(titulo)
+    ax.set_xlabel(rotulo_x)
+    ax.set_ylabel('logito do cancelamento')
+    ax.legend(frameon=False, fontsize=9)
+    return ax

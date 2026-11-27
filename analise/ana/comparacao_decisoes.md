@@ -24,9 +24,19 @@ Decisões de escopo e limpeza em que o `01_exploratoria.ipynb` (Ana) e os notebo
 | `agent` / `company` vazios | 16.340 / 112.593 | Ainda não decidido se as variáveis entram. Se entrarem, o vazio vira categoria ("sem agência" / "sem empresa") | As duas saem do modelo (`agent`: código sem significado de negócio; `company`: 94% vazia), então o vazio não precisa de tratamento | a decidir: primeiro se entram (bivariada), depois o vazio |
 | `Undefined` no segmento e no canal | 2 e 5 | Segmento em "Outros"; o canal tende a sair | Segmento em "Outros" (com Complementary e Aviation); o canal sai | igual |
 
+## Variáveis
+
+| Variável | Ana | Notebooks do grupo | Situação |
+| --- | --- | --- | --- |
+| `previous_cancellations` | Sai: 1 cancelamento anterior cancela 92,4% no treino (79,8% dessas reservas são de 2015) e 17,5% no teste, contra 31,9% sem cancelamento anterior. A relação muda de sentido em 2017 | Testar: já cancelou × nunca cancelou | diferente |
+| `babies` | Sai: com bebê cancela 20,6%, contra 26,6% sem; sentido oposto ao de `children`, então não junta com ela | Sai: quase sempre zero. A derivada `com_crianca` (notebook 03) soma crianças e bebês | igual para `babies`; diferente na derivada |
+| `noites` | Faixas: até 1 (zero noites junto), 2–3, 4–7 e mais de 7 | Dicionário: as mesmas faixas. Notebook 03: zero noites numa faixa própria | igual ao dicionário |
+
 ## Para fechar com o grupo
 
 1. **`children` vazio:** remover ou preencher com 0? São só 4 reservas: a escolha não muda o modelo, mas o `04_preparacao` precisa de uma regra só.
 2. **Sem hóspede e diária negativa:** aplicar a remoção no `04_preparacao`, já que as duas propostas apontam para o mesmo lado.
 3. **Zero noites:** alinhar o notebook 03 com o dicionário (juntar com 1 noite) ou manter a faixa própria. Com faixa própria, a referência das dummies não pode ser a de zero noites (VIF alto).
 4. **`meal = Undefined`:** decidir pela bivariada no treino (2015 e 2016) e no escopo escolhido.
+5. **`previous_cancellations`:** tirar do modelo ou manter em teste? Se ficar em teste, conferir o sinal do coeficiente também no teste (2017).
+6. **Criança e bebê:** `com_crianca` com ou sem os bebês.
