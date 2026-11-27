@@ -304,3 +304,30 @@ def grafico_logito(tabela, titulo='', rotulo_x='', taxa_geral=None, ax=None):
     ax.set_ylabel('logito do cancelamento')
     ax.legend(frameon=False, fontsize=9)
     return ax
+
+
+# -----------------------------------------------------------------------------
+# Força da associação
+# -----------------------------------------------------------------------------
+def v_cramer(base, variavel, y='is_canceled'):
+    """V de Cramér entre uma variável categórica e o y (de 0 a 1).
+
+    Mede a força da associação a partir do qui-quadrado da tabela cruzada, sem
+    depender do tamanho da base. Serve para ordenar as candidatas. Variáveis com
+    muitos níveis (como códigos de agência) tendem a ter V maior só pelo número de
+    níveis, então a comparação vale melhor entre variáveis com poucos níveis.
+
+    Parâmetros
+    ----------
+    base : DataFrame
+    variavel : str
+    y : str
+
+    Retorna
+    -------
+    float
+    """
+    from scipy.stats import chi2_contingency
+    tabela = pd.crosstab(base[variavel], base[y])
+    qui2 = chi2_contingency(tabela, correction=False)[0]
+    return float(np.sqrt(qui2 / (tabela.values.sum() * (min(tabela.shape) - 1))))
