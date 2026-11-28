@@ -33,12 +33,13 @@ Decisões de escopo e limpeza em que os notebooks da Ana (`01_exploratoria.ipynb
 | `babies` | Entra como "com bebê" (sim ou não), ao lado de "sozinho" e "2 ou mais crianças" (notebook 02, seção 3.7). Sozinho, o bebê não separa o cancelamento (a árvore não faz corte); com adultos e crianças no modelo, melhora o BIC em 9,0 pontos, e a ordem se mantém em 2015 e 2016 (19,4% e 21,4% com bebê, contra 24,7% e 27,6% sem). Não é somado às crianças: vai no sentido oposto | Sai: quase sempre zero. A derivada `com_crianca` (notebook 03) soma crianças e bebês | diferente |
 | `lead_time` | Faixas pela árvore de decisão (ganho de informação), conferidas em 2015 e 2016: 0, 1–8, 9–25 e mais de 25 dias. Os cortes em 257 e 315 dias invertem a ordem entre os anos (acima de 315 dias: 82,6% em 2015, 18,8% em 2016) e saem. A proposta do `TODO.md` fica 62,0 pontos de BIC atrás | `TODO.md` e dicionário: até 7, 8–30, 31–90, 91–180 e mais de 180 dias | diferente |
 | `noites` | Faixas pela árvore de decisão: 1, 2–3 e 4 ou mais (as zero noites saem da base). Separar 4–7 de mais de 7 não se sustenta pelo BIC | Dicionário: até 1 (zero noites junto), 2–3, 4–7 e mais de 7. Notebook 03: zero noites numa faixa própria | quase igual ao dicionário |
-| `meal` | Testar com quatro níveis: BB (referência), com pensão (HB e FB), SC e Undefined | Testar: sem refeição (SC e Undefined) × com refeição | diferente |
-| `arrival_date_month` | Duas temporadas: jul–ago × resto do ano. Só jul–ago fica acima nos dois anos (35,2% e 30,9%); em 2016, abr–jun (26,1%) e set–mar (27,1%) não se separam | Três temporadas: jul–ago, abr–jun e set–mar | diferente |
-| `customer_type` | A decidir no notebook 02, seção 4. Group (344 reservas, 12,8%) não se parece com nenhum nível. Possibilidades: juntar com Contract (taxa mais próxima, 22,5%), juntar com Transient-Party (conceito mais próximo, 24,2%), deixar separado ou tirar a variável (V de 0,049; repete parte do segmento) | Entra | a decidir |
-| `company` | Testar "paga por empresa": nos grupos, 4,7% de cancelamento com empresa (614 reservas), contra 34,1% sem | Sai: quase toda vazia | diferente |
-| `adr` | Candidata em 6 faixas da árvore de decisão, conferidas em 2015 e 2016: até 59, 60–64, 65–67, 68–114, 115 e mais de 115 € (diária arredondada para o euro). Os cortes em 61 e 63 € invertem a ordem entre os anos e saem. As faixas estreitas seguem tarifas de grupos, operadoras e empresas (por exemplo, 62 € em blocos de grupos). O preço sobe em 2017 (mediana do urbano de 96,2 para 114,4): faixas em euros envelhecem. O notebook 02, seção 4, decide se entra | Entra como número (858,0 pontos de BIC atrás das 6 faixas) | diferente |
+| `meal` | Sai (notebook 02, seção 3.14): nenhum agrupamento vale nos dois anos do treino. SC cancela 8,6% em 2015 e 37,6% em 2016 | Testar: sem refeição (SC e Undefined) × com refeição | diferente |
+| `arrival_date_month` | Três temporadas pela árvore (notebook 02, seção 3.16): baixa (jan, mar, nov), média (fev, abr–jun, set, out, dez) e alta (jul–ago), com a ordem mantida em 2015 e 2016. As três temporadas fixas do grupo ficam 75,0 pontos de BIC atrás, e abril a junho não existe em 2015 | Três temporadas: jul–ago, abr–jun e set–mar | diferente |
+| `customer_type` | Sai (notebook 02, seção 3.13): o único corte da árvore (avulso × avulso ligado a outra reserva) inverte entre 2015 e 2016 | Entra | diferente |
+| `company` | Entra como "paga por empresa" × não (notebook 02, seção 3.17): 11,4% contra 27,8%, ordem mantida em 2015 e 2016. O código sai | Sai: quase toda vazia | diferente |
+| `adr` | Candidata como até 59 € × mais de 59 € (notebook 02, seção 3.3; diária arredondada para o euro). Da árvore saem os cortes que criam faixas de menos de 10 € (tarifas de grupos, operadoras e empresas, como 62 € em blocos de grupos) e o de 115 €, que inverte entre 2015 e 2016. O preço sobe em 2017: faixas em euros envelhecem. O notebook 02, seção 4, decide se entra | Entra como número (155,6 pontos de BIC atrás das 2 faixas) | diferente |
 | `agent` | Sai: 275 códigos anônimos, embora separem reservas do mesmo segmento (agência online: de 13,9% a 38,7%) | Sai por ora | igual |
+| `market_segment` | Dois grupos pela árvore (notebook 02, seção 3.11): agência online e grupos × demais. Todos os segmentos separados não valem nos dois anos: grupos cancelam mais que a agência online em 2015 (37,8% × 26,8%) e menos em 2016 (25,9% × 35,7%) | Todos os segmentos, com cortesia, aviação e Undefined em "Outros" | diferente |
 
 ## Leituras
 
@@ -51,10 +52,10 @@ Decisões de escopo e limpeza em que os notebooks da Ana (`01_exploratoria.ipynb
 1. **`children` vazio:** remover ou preencher com 0? São só 4 reservas: a escolha não muda o modelo, mas o `04_preparacao` precisa de uma regra só.
 2. **Sem hóspede, diária negativa e zero noites:** aplicar a remoção no `04_preparacao`. Nas duas primeiras, as propostas apontam para o mesmo lado; a remoção das zero noites é nova (o dicionário junta com 1 noite, e o notebook 03 deixa numa faixa própria).
 3. **Faixas de antecedência e de noites:** adotar os cortes da árvore de decisão (notebook 02, seções 3.1 e 3.2) no lugar dos do `TODO.md` e do dicionário.
-4. **`meal`:** quatro níveis (Undefined separado) ou sem refeição × com refeição. Com a junção, efeitos opostos dos dois hotéis se misturam.
+4. **`meal`:** sai no notebook 02 (nenhum agrupamento vale em 2015 e 2016) ou entra como sem refeição × com refeição?
 5. **`previous_cancellations`:** sair por suspeita de vazamento (notebook 02, seção 3.9) ou manter em teste? A evidência vem só do treino: 100% de cancelamento nos blocos com cancelamento anterior, nos dois anos.
 6. **Criança e bebê:** três variáveis sim ou não (sozinho, 2 ou mais crianças, com bebê) ou `com_crianca` somando crianças e bebês. Uma variável única de composição fica 3,9 pontos de BIC atrás das três separadas.
-7. **Temporadas:** duas (jul–ago × resto) ou três.
+7. **Temporadas:** três pela árvore (baixa, média, alta) ou as três fixas do grupo (jul–ago, abr–jun, set–mar).
 8. **`company`:** testar "paga por empresa" ou deixar fora.
-9. **`customer_type`:** entra ou sai (notebook 02, seção 4); se entrar, o destino do nível Group.
+9. **`customer_type`:** sai no notebook 02 (o único corte inverte entre 2015 e 2016) ou entra?
 10. **Uso do teste:** nenhuma escolha de cortes ou de variáveis usa o teste (2017); a estabilidade é conferida entre 2015 e 2016, dentro do treino. Os notebooks do grupo usam o teste antes do modelo (notebook 03, decomposição da alta de 2017).

@@ -577,6 +577,47 @@ def cortes_por_ganho(base, variavel, min_faixa=0.005, ganho_minimo=0.0005, max_f
     return pd.DataFrame(linhas).set_index('faixas')
 
 
+def conferir_largura_minima(base, variavel, passos, largura):
+    """Tira os cortes da árvore que criam faixas mais estreitas que `largura`.
+
+    Uma faixa estreita demais (por exemplo, de 62 a 63 €) costuma separar uma tarifa ou um
+    caso específico, e não um nível da variável. Entre os cortes que limitam faixas
+    estreitas, sai o de menor ganho de informação, e a conferência se repete até todas as
+    faixas terem pelo menos `largura` valores. A última faixa, aberta, não conta.
+
+    Parâmetros
+    ----------
+    base : DataFrame
+    variavel : str
+        Coluna numérica de valores inteiros.
+    passos : DataFrame
+        Saída de cortes_por_ganho.
+    largura : int
+        Número mínimo de valores inteiros em cada faixa (por exemplo, 10 euros).
+
+    Retorna
+    -------
+    passos_que_ficam : DataFrame
+        As linhas de `passos` dos cortes aceitos que ficam, no formato de cortes_por_ganho
+        (pode ir direto para conferir_cortes_por_periodo).
+    saidas : list
+        Uma frase por corte que saiu.
+    """
+    aceitos = passos[passos['aceito'] == 'sim']
+    ganho = {int(c): g for c, g in zip(aceitos['corte_novo'], aceitos['ganho'])}
+    cortes, saidas = sorted(ganho), []
+    minimo = int(base[variavel].min())
+    while True:
+        limites = [minimo - 1] + cortes
+        estreitos = {c for a, b in zip(limites[:-1], limites[1:]) if b - a < largura for c in (a, b) if c in cortes}
+        if not estreitos:
+            break
+        sai = min(estreitos, key=ganho.get)
+        saidas.append(f'O corte em {sai} cria uma faixa com menos de {largura} valores e sai.')
+        cortes.remove(sai)
+    return aceitos[aceitos['corte_novo'].astype(int).isin(cortes)], saidas
+
+
 def conferir_cortes_por_periodo(base, variavel, passos, periodo='arrival_date_year', y='is_canceled'):
     """Tira os cortes da árvore que não valem nos dois períodos da base.
 
@@ -635,9 +676,77 @@ def conferir_cortes_por_periodo(base, variavel, passos, periodo='arrival_date_ye
         sai = min(invertem, key=ganho.get)
         saidas.append(f'Rodada {rodada}: o corte em {sai} inverte a ordem entre os períodos e sai.')
         cortes.remove(sai)
+        if not cortes:
+            break                                             # nenhum corte vale nos dois períodos
         rodada += 1
     tabela = pd.concat(tabelas, names=['rodada', 'faixa'])
     return cortes, tabela, saidas
+
+
+def agrupar_categorias(base, coluna, periodo='arrival_date_year', min_faixa=0.005, ganho_minimo=0.0005,
+                       y='is_canceled'):
+    """Agrupa as categorias de uma variável com a árvore de decisão e a conferência por período.
+
+    É o método das numéricas aplicado a uma categórica:
+    1. as categorias com menos de `min_faixa` da base se juntam em "outras";
+    2. as categorias são ordenadas pela taxa de y, e cada uma recebe a sua posição nessa ordem;
+    3. a árvore de decisão (cortes_por_ganho) procura onde cortar essa ordem;
+    4. a conferência por período (conferir_cortes_por_periodo) tira os cortes que invertem.
+
+    Parâmetros
+    ----------
+    base : DataFrame
+        Só os dados usados nas decisões (o treino).
+    coluna : str
+        Coluna categórica.
+    periodo, min_faixa, ganho_minimo, y
+        Como em cortes_por_ganho e conferir_cortes_por_periodo.
+
+    Retorna
+    -------
+    grupo : Series
+        O grupo de cada linha (os nomes das categorias do grupo, separados por vírgula).
+    tabela : DataFrame
+        Uma linha por categoria, na ordem da taxa: reservas, parcela da base, taxa, taxa em
+        cada período e o grupo final.
+    saidas : list
+        Uma frase por corte que a árvore aceitou e que saiu na conferência.
+    """
+    import re
+    contagem = base[coluna].value_counts()
+    pequenas = contagem[contagem / len(base) < min_faixa].index
+    categoria = base[coluna].astype(str).where(~base[coluna].isin(pequenas), 'outras')
+    ordem = list(base.groupby(categoria)[y].mean().sort_values().index)
+    posicao = categoria.map({c: i for i, c in enumerate(ordem)})
+    dados = base.assign(_posicao=posicao)
+    passos = cortes_por_ganho(dados, '_posicao', min_faixa=min_faixa, ganho_minimo=ganho_minimo, y=y)
+    cortes, _, saidas_numeros = conferir_cortes_por_periodo(dados, '_posicao', passos, periodo=periodo, y=y)
+
+    def entre(c):
+        return f'entre {ordem[c]} e {ordem[c + 1]}'
+    saidas = []
+    for frase in saidas_numeros:
+        numeros = re.findall(r'corte em (\d+)', frase)
+        if numeros:
+            saidas.append(f'O corte {entre(int(numeros[0]))} inverte a ordem entre os períodos e sai.')
+    aceitos = [int(c) for c in passos.loc[passos['aceito'] == 'sim', 'corte_novo']]
+    limites = [-1] + cortes + [len(ordem) - 1]
+    nome_grupo = {}
+    for a, b in zip(limites[:-1], limites[1:]):
+        membros = ordem[a + 1:b + 1]
+        for m in membros:
+            nome_grupo[m] = ', '.join(membros)
+    grupo = categoria.map(nome_grupo)
+
+    tabela = base.groupby(categoria)[y].agg(reservas='size', taxa='mean').reindex(ordem)
+    tabela.insert(1, 'pct_base', tabela['reservas'] / len(base))
+    por_periodo = base.groupby([categoria, periodo])[y].mean().unstack().reindex(ordem)
+    for p in por_periodo.columns:
+        tabela[f'taxa_{p}'] = por_periodo[p]
+    tabela['grupo'] = [nome_grupo[c] for c in ordem]
+    if not aceitos:
+        saidas = ['A árvore não aceitou nenhum corte.'] + saidas
+    return grupo, tabela.rename_axis(coluna), saidas
 
 
 def desenhar_arvore(base, variavel, n_faixas, unidade, titulo, ultima='mais de', examinar=(), min_faixa=0.005,
