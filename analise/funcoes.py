@@ -31,6 +31,7 @@ CORES = {
     'principal': '#2b4fa3',    # série única; reservas canceladas (y = 1)
     'secundaria': '#e07b39',   # reservas que vieram (y = 0), quando os dois grupos aparecem juntos
     'referencia': '#a6a6a6',   # linhas de referência (como a taxa geral), eixos e marcas dos eixos
+    'terciaria': '#2a9d8f',    # terceira série, quando três aparecem juntas (separação conferida para daltonismo)
 }
 
 
@@ -476,6 +477,8 @@ NOMES_VARIAVEIS = {
     'pedido_especial': 'pedido especial', 'ja_veio': 'já veio', 'hotel': 'hotel',
     'segmento': 'segmento', 'canal': 'canal', 'tem_agencia': 'tem agência',
     'paga_empresa': 'paga por empresa', 'temporada': 'temporada',
+    'temporada_alta': 'temporada (alta × resto)', 'segmento3': 'segmento (3 níveis)',
+    'online_ate8': 'agência online até 8 dias',
 }
 
 
@@ -494,8 +497,11 @@ def montar_variaveis(base):
 
     Retorna
     -------
-    DataFrame com o mesmo índice da base: is_canceled, arrival_date_year e as
-    variáveis de SITUACAO_VARIAVEIS.
+    DataFrame com o mesmo índice da base: is_canceled, arrival_date_year, as
+    variáveis de SITUACAO_VARIAVEIS e três formas testadas no 05_modelo, seção 4:
+    temporada_alta (julho e agosto × resto do ano), segmento3 (agência online, grupos e
+    demais) e online_ate8 (agência online com até 8 dias de antecedência, a interação
+    entre o segmento e a antecedência).
     """
     def niveis(valores, ordem):
         return pd.Categorical(valores, categories=ordem)
@@ -532,6 +538,12 @@ def montar_variaveis(base):
         'paga_empresa': niveis(np.where(base['company'].notna(), 'paga por empresa', 'sem empresa'),
                                ['sem empresa', 'paga por empresa']),
         'temporada': niveis(temporada, ['média', 'baixa', 'alta']),
+        # formas testadas no 05_modelo, seção 4
+        'temporada_alta': niveis(np.where(mes.isin(['July', 'August']), 'alta', 'resto do ano'),
+                                 ['resto do ano', 'alta']),
+        'segmento3': niveis(base['market_segment'].map({'Online TA': 'agência online', 'Groups': 'grupos'})
+                            .fillna('demais'), ['agência online', 'grupos', 'demais']),
+        'online_ate8': sim_nao((base['market_segment'] == 'Online TA') & (base['lead_time'] <= 8)),
     }, index=base.index)
     return pd.concat([base[['is_canceled', 'arrival_date_year']], variaveis], axis=1)
 
@@ -691,6 +703,244 @@ def ajustar_logistica(formula, base):
     modelo = smf.glm(formula, data=base, family=sm.families.Binomial()).fit()
     modelo.bic_projeto = -2 * modelo.llf + (modelo.df_model + 1) * np.log(modelo.nobs)
     return modelo
+
+
+def stepwise(base, candidatas, y='is_canceled', criterio='bic'):
+    """Seleção stepwise (nos dois sentidos) de variáveis para a regressão logística.
+
+    Começa sem nenhuma variável. A cada passo:
+    1. tenta pôr cada candidata que está fora e fica com a que mais reduz o critério;
+       se nenhuma reduz, para;
+    2. depois de cada entrada, tenta tirar cada variável que está dentro; enquanto
+       alguma saída reduzir o critério, tira a que mais reduz.
+    Cada variável entra ou sai inteira (todas as dummies de uma categórica juntas), e
+    todos os modelos usam as mesmas linhas, para os critérios serem comparáveis. Um
+    conjunto de variáveis já visitado não é visitado de novo, o que evita ciclos.
+
+    Parâmetros
+    ----------
+    base : DataFrame
+        Sem vazios nas colunas usadas.
+    candidatas : list de str
+    y : str
+    criterio : 'bic' ou 'aic'
+        BIC no padrão do projeto (−2·log-verossimilhança + (coeficientes + 1)·ln n).
+
+    Retorna
+    -------
+    finais : list
+        Variáveis do modelo escolhido, na ordem em que entraram.
+    historico : DataFrame
+        Um passo por linha: a ação (entra ou sai), a variável, o critério depois do
+        passo e quanto ele caiu.
+    """
+    def valor(variaveis):
+        formula = f"{y} ~ {' + '.join(variaveis) if variaveis else '1'}"
+        m = ajustar_logistica(formula, base)
+        return m.bic_projeto if criterio == 'bic' else m.aic
+
+    atuais = []
+    atual = valor(atuais)
+    visitados = {frozenset()}
+    historico = [{'passo': 0, 'acao': 'início', 'variavel': '', criterio: atual, 'queda': np.nan}]
+
+    def registrar(acao, variavel, novo):
+        historico.append({'passo': len(historico), 'acao': acao, 'variavel': variavel,
+                          criterio: novo, 'queda': atual - novo})
+
+    while True:
+        opcoes = {v: valor(atuais + [v]) for v in candidatas
+                  if v not in atuais and frozenset(atuais + [v]) not in visitados}
+        if not opcoes:
+            break
+        v, novo = min(opcoes.items(), key=lambda par: par[1])
+        if novo >= atual:
+            break
+        registrar('entra', v, novo)
+        atuais, atual = atuais + [v], novo
+        visitados.add(frozenset(atuais))
+        while len(atuais) > 1:
+            saidas = {v: valor([a for a in atuais if a != v]) for v in atuais
+                      if frozenset(a for a in atuais if a != v) not in visitados}
+            if not saidas:
+                break
+            v, novo = min(saidas.items(), key=lambda par: par[1])
+            if novo >= atual:
+                break
+            registrar('sai', v, novo)
+            atuais, atual = [a for a in atuais if a != v], novo
+            visitados.add(frozenset(atuais))
+    return atuais, pd.DataFrame(historico).set_index('passo')
+
+
+def stepwise_com_sinais(base, candidatas, y='is_canceled', criterio='bic', periodo='arrival_date_year'):
+    """Stepwise repetido até todos os sinais valerem nos períodos.
+
+    Roda o `stepwise`; se algum coeficiente do modelo escolhido tem sinais diferentes
+    nos ajustes de cada período (`coeficientes_por_periodo`), sai a variável desse
+    coeficiente (a de menor queda no critério, se houver mais de uma) e o stepwise roda
+    de novo sem ela. Para quando nenhum sinal inverte.
+
+    Retorna
+    -------
+    finais : list
+    historico : DataFrame
+        Os passos do último stepwise.
+    rodadas : DataFrame
+        Uma linha por variável retirada: a rodada, a variável, o coeficiente que
+        inverteu e o valor dele em cada período.
+    """
+    candidatas = list(candidatas)
+    rodadas = []
+    while True:
+        finais, historico = stepwise(base, candidatas, y=y, criterio=criterio)
+        sinais = coeficientes_por_periodo(base, f"{y} ~ {' + '.join(finais)}", finais, periodo=periodo)
+        invertem = sinais[sinais['mesmo_sinal'] == 'não']
+        if invertem.empty:
+            break
+        dona = {t: next(v for v in finais if t == v or t.startswith(f'{v}[')) for t in invertem.index}
+        queda = historico.groupby('variavel')['queda'].last()   # a última vez que a variável entrou
+        sai = min(set(dona.values()), key=lambda v: queda.get(v, np.inf))
+        for termo, linha in invertem.iterrows():
+            if dona[termo] == sai:
+                rodadas.append({'rodada': len(rodadas) + 1, 'variavel': sai, 'coeficiente': termo,
+                                **linha.filter(like='coef_').to_dict()})
+        candidatas.remove(sai)
+    return finais, historico, pd.DataFrame(rodadas)
+
+
+def razoes_de_chances(modelo, confianca=0.95):
+    """Coeficientes de um modelo logístico como razões de chances (e^b), com intervalo.
+
+    Razão de chances 1 = nenhuma diferença em relação à referência; 2 = o dobro da
+    chance (odds) de cancelar; 0,5 = metade. Fica sem o intercepto.
+    """
+    ic = np.exp(modelo.conf_int(alpha=1 - confianca))
+    tabela = pd.DataFrame({'coef': modelo.params, 'razao_chances': np.exp(modelo.params),
+                           'ic_inf': ic[0], 'ic_sup': ic[1], 'p_valor': modelo.pvalues})
+    return tabela.drop(index='Intercept', errors='ignore').rename_axis('coeficiente')
+
+
+def parcela_capturada(y, pontuacao, fracao):
+    """Parcela dos eventos (cancelamentos) nas reservas de maior pontuação, quando se
+    contata uma fração das reservas.
+
+    Reservas com a mesma pontuação empatam. Se o corte cai no meio de um grupo empatado,
+    entra a parte proporcional dos eventos desse grupo, o que equivale a sortear quem
+    entra dentro do grupo. Sem isso, o resultado dependeria da ordem das linhas.
+    """
+    d = pd.DataFrame({'y': np.asarray(y), 's': np.asarray(pontuacao)})
+    g = d.groupby('s')['y'].agg(['size', 'sum']).sort_index(ascending=False)
+    k = fracao * len(d)
+    antes = g['size'].cumsum() - g['size']
+    parte = (k - antes).clip(lower=0, upper=g['size']) / g['size']
+    return float((parte * g['sum']).sum() / d['y'].sum())
+
+
+def curva_ganho(y, pontuacoes, fracoes):
+    """Parcela dos eventos encontrados por cada forma de ordenar as reservas, em cada
+    fração de reservas contatadas (`parcela_capturada`).
+
+    Parâmetros
+    ----------
+    y : array 0/1
+    pontuacoes : dict
+        {nome: pontuação de cada reserva}; maior pontuação = contatada antes.
+    fracoes : list de float
+
+    Retorna
+    -------
+    DataFrame com uma linha por fração e uma coluna por forma de ordenar.
+    """
+    return pd.DataFrame({nome: [parcela_capturada(y, s, f) for f in fracoes] for nome, s in pontuacoes.items()},
+                        index=pd.Index(fracoes, name='pct_contatadas'))
+
+
+def taxa_por_bloco(y, prob, passo=0.05):
+    """Taxa de cancelamento de cada bloco de ligações, com as reservas ordenadas da
+    maior para a menor probabilidade: o bloco de 0% a 5% das reservas, de 5% a 10%...
+    Os empates entram pela parte proporcional (`parcela_capturada`). Mostra até onde
+    cada ligação a mais ainda encontra mais cancelamentos que a média.
+
+    Retorna
+    -------
+    DataFrame com uma linha por bloco: de, ate, taxa_bloco e cancel_acum (parcela
+    acumulada dos cancelamentos encontrados até o fim do bloco).
+    """
+    y = np.asarray(y)
+    fracoes = np.round(np.arange(0, 1 + passo / 2, passo), 10)
+    acum = [parcela_capturada(y, prob, f) for f in fracoes]
+    total, n = y.sum(), len(y)
+    return pd.DataFrame({'de': fracoes[:-1], 'ate': fracoes[1:],
+                         'taxa_bloco': np.diff(acum) * total / (n * passo),
+                         'cancel_acum': acum[1:]}).set_index(['de', 'ate'])
+
+
+def grafico_ganho(tabela, titulo='', subtitulo='', estilos=None):
+    """Curva de ganho: parcela dos eventos encontrados (eixo y) contra a parcela das
+    reservas contatadas (eixo x), uma linha por coluna de `curva_ganho`, com a diagonal
+    do contato ao acaso, com legenda (as linhas se encontram nas pontas).
+
+    estilos : dict, opcional
+        {coluna: dict de argumentos do plot (cor, tracejado...)}.
+    """
+    from matplotlib.ticker import PercentFormatter
+    fig, ax = plt.subplots(figsize=(12, 5.5))
+    ax.plot([0, 1], [0, 1], color=CORES['referencia'], linestyle='--', linewidth=1)
+    ax.annotate('ao acaso', xy=(0.85, 0.85), xytext=(8, -4), textcoords='offset points',
+                color=CORES['referencia'], fontsize=9, va='top')
+    for coluna in tabela.columns:
+        estilo = {'linewidth': 1.5, **(estilos or {}).get(coluna, {})}
+        ax.plot(tabela.index, tabela[coluna], label=coluna, **estilo)
+    ax.legend(frameon=False, loc='lower right')
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.xaxis.set_major_formatter(PercentFormatter(1, decimals=0))
+    ax.yaxis.set_major_formatter(PercentFormatter(1, decimals=0))
+    ax.set_xlabel('reservas contatadas, da maior para a menor pontuação')
+    ax.set_ylabel('cancelamentos encontrados')
+    fig.suptitle(titulo, fontsize=12, y=0.98)
+    if subtitulo:
+        fig.text(0.5, 0.92, subtitulo, ha='center', fontsize=10, color='#666666')
+    fig.subplots_adjust(top=0.86)
+    return ax
+
+
+def grupos_de_risco(prob, n_grupos=10):
+    """Grupos de risco pelos quantis da probabilidade prevista (1 = o de menor risco),
+    cada um com cerca de 1/n_grupos das reservas. Reservas com a mesma probabilidade
+    ficam no mesmo grupo; por isso, havendo muitos empates, os grupos podem ter tamanhos
+    diferentes e ser menos de n_grupos."""
+    return pd.qcut(np.asarray(prob), n_grupos, labels=False, duplicates='drop') + 1
+
+
+def calibracao(y, prob, grupos):
+    """Probabilidade média prevista e taxa real por grupo (por exemplo, grupos de risco
+    ou segmentos), com a diferença em pontos percentuais (real − prevista)."""
+    d = pd.DataFrame({'y': np.asarray(y), 'prob': np.asarray(prob), 'grupo': np.asarray(grupos)})
+    t = d.groupby('grupo', observed=True).agg(reservas=('y', 'size'), prob_media=('prob', 'mean'), taxa_real=('y', 'mean'))
+    t['dif_pp'] = (t['taxa_real'] - t['prob_media']) * 100
+    return t
+
+
+def hosmer_lemeshow(y, prob, n_grupos=10):
+    """Teste de Hosmer-Lemeshow: compara eventos previstos e observados nos grupos de
+    risco (`grupos_de_risco`). H0: o modelo está calibrado. Estatística qui-quadrado
+    com (número de grupos − 2) graus de liberdade. Com dezenas de milhares de linhas,
+    qualquer desvio pequeno dá p-valor baixo: a tabela de calibração diz se o desvio
+    importa.
+
+    Retorna
+    -------
+    dict com estatistica, gl e p_valor.
+    """
+    from scipy.stats import chi2
+    t = calibracao(y, prob, grupos_de_risco(prob, n_grupos))
+    previstos = t['prob_media'] * t['reservas']
+    observados = t['taxa_real'] * t['reservas']
+    estat = (((observados - previstos) ** 2) / (previstos * (1 - t['prob_media']))).sum()
+    gl = len(t) - 2
+    return {'estatistica': float(estat), 'gl': gl, 'p_valor': float(chi2.sf(estat, gl))}
 
 
 def comparar_modelos(base, formulas, base_comparacao=None):
