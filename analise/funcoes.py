@@ -463,8 +463,8 @@ def preparar_base(hotel):
 # (a candidata depende do teste com as outras variáveis no modelo).
 SITUACAO_VARIAVEIS = {
     'antecedencia': 'entra', 'noites': 'entra', 'diaria': 'candidata',
-    'sozinho': 'entra', 'duas_criancas': 'entra', 'com_bebe': 'entra',
-    'pedido_especial': 'entra', 'ja_veio': 'entra', 'hotel': 'entra',
+    'sozinho': 'entra', 'duas_criancas': 'entra', 'com_bebe': 'candidata',
+    'pedido_especial': 'candidata', 'ja_veio': 'entra', 'hotel': 'entra',
     'segmento': 'entra', 'canal': 'candidata', 'tem_agencia': 'candidata',
     'paga_empresa': 'entra', 'temporada': 'entra',
 }
@@ -678,6 +678,117 @@ def comparar_cortes(base, variavel, opcoes, formulas=None, y='is_canceled'):
     tabela.insert(4, 'dif_AIC', tabela['AIC'] - tabela['AIC'].min())
     tabela.insert(6, 'dif_BIC', tabela['BIC'] - tabela['BIC'].min())
     return tabela.set_index('opcao').round({'AIC': 1, 'dif_AIC': 1, 'BIC': 1, 'dif_BIC': 1})
+
+
+# -----------------------------------------------------------------------------
+# Variáveis em conjunto
+# -----------------------------------------------------------------------------
+def ajustar_logistica(formula, base):
+    """Regressão logística (GLM binomial do statsmodels) e o BIC no padrão do projeto:
+    −2·log-verossimilhança + (coeficientes + intercepto)·ln(n)."""
+    import statsmodels.api as sm
+    import statsmodels.formula.api as smf
+    modelo = smf.glm(formula, data=base, family=sm.families.Binomial()).fit()
+    modelo.bic_projeto = -2 * modelo.llf + (modelo.df_model + 1) * np.log(modelo.nobs)
+    return modelo
+
+
+def comparar_modelos(base, formulas, base_comparacao=None):
+    """Compara modelos ajustados nos mesmos dados pelo AIC e pelo BIC (quanto menor, melhor).
+
+    Parâmetros
+    ----------
+    base : DataFrame
+    formulas : dict
+        {nome do modelo: fórmula}.
+    base_comparacao : str, opcional
+        Nome de um dos modelos. Quando dado, a tabela traz também a diferença de AIC e
+        de BIC de cada modelo para ele (negativa = melhor que ele).
+
+    Retorna
+    -------
+    DataFrame ordenado pelo BIC, com n_coeficientes, AIC, BIC e as diferenças para o
+    melhor modelo (dif_AIC, dif_BIC) e, se pedido, para o modelo de comparação.
+    """
+    linhas = []
+    for nome, formula in formulas.items():
+        m = ajustar_logistica(formula, base)
+        linhas.append({'modelo': nome, 'n_coeficientes': int(m.df_model), 'AIC': m.aic, 'BIC': m.bic_projeto})
+    tabela = pd.DataFrame(linhas).set_index('modelo').sort_values('BIC')
+    tabela['dif_AIC'] = tabela['AIC'] - tabela['AIC'].min()
+    tabela['dif_BIC'] = tabela['BIC'] - tabela['BIC'].min()
+    colunas = ['n_coeficientes', 'AIC', 'dif_AIC', 'BIC', 'dif_BIC']
+    if base_comparacao is not None:
+        tabela['AIC_vs_base'] = tabela['AIC'] - tabela.loc[base_comparacao, 'AIC']
+        tabela['BIC_vs_base'] = tabela['BIC'] - tabela.loc[base_comparacao, 'BIC']
+        colunas += ['AIC_vs_base', 'BIC_vs_base']
+    return tabela[colunas].round(1)
+
+
+def gvif(base, variaveis):
+    """VIF generalizado (GVIF) de cada variável, com todas juntas.
+
+    O VIF comum mede quanto a variância de um coeficiente aumenta porque a variável é
+    explicada pelas outras. Uma categórica com vários níveis tem várias dummies; o GVIF
+    trata a variável inteira de uma vez (Fox e Monette, 1992):
+    GVIF = det(R11) · det(R22) / det(R), em que R é a matriz de correlação das dummies,
+    R11 a parte da variável e R22 a das outras. Para comparar variáveis com números
+    diferentes de níveis, usa-se GVIF^(1/(2·gl)), na escala da raiz do VIF; elevado ao
+    quadrado, volta à escala do VIF comum (vif_equivalente). Numa variável sim ou não,
+    o GVIF é igual ao VIF comum.
+
+    Parâmetros
+    ----------
+    base : DataFrame
+    variaveis : list de str
+
+    Retorna
+    -------
+    DataFrame ordenado do maior para o menor: gl (número de dummies), GVIF e
+    vif_equivalente.
+    """
+    import patsy
+    X = patsy.dmatrix(' + '.join(variaveis), base, return_type='dataframe').drop(columns='Intercept')
+    R = np.corrcoef(X.to_numpy(), rowvar=False)
+    det_R = np.linalg.det(R)
+    linhas = {}
+    for v in variaveis:
+        dela = [i for i, c in enumerate(X.columns) if c == v or c.startswith(f'{v}[')]
+        outras = [i for i in range(X.shape[1]) if i not in dela]
+        valor = np.linalg.det(R[np.ix_(dela, dela)]) * np.linalg.det(R[np.ix_(outras, outras)]) / det_R
+        linhas[v] = {'gl': len(dela), 'GVIF': valor, 'vif_equivalente': valor ** (1 / len(dela))}
+    return pd.DataFrame(linhas).T.astype({'gl': int}).sort_values('vif_equivalente', ascending=False).rename_axis('variavel')
+
+
+def coeficientes_por_periodo(base, formula, variaveis, periodo='arrival_date_year'):
+    """Coeficientes de algumas variáveis no modelo ajustado no treino todo e em cada
+    período separado, para conferir se o sinal se mantém.
+
+    Parâmetros
+    ----------
+    base : DataFrame
+    formula : str
+    variaveis : list de str
+        Nomes das variáveis cujos coeficientes entram na tabela (cada nível conta como
+        um coeficiente, como 'diaria[T.até 59]').
+    periodo : str
+
+    Retorna
+    -------
+    DataFrame com uma linha por coeficiente: coef e p-valor no treino todo, o coef em
+    cada período e mesmo_sinal (sim ou não). Um nível sem dados num período fica em
+    branco nesse período e de fora da conferência.
+    """
+    todos = ajustar_logistica(formula, base)
+    termos = [t for t in todos.params.index if any(t == v or t.startswith(f'{v}[') for v in variaveis)]
+    tabela = pd.DataFrame({'coef': todos.params[termos], 'p_valor': todos.pvalues[termos]})
+    for p, dados in base.groupby(periodo):
+        m = ajustar_logistica(formula, dados)
+        tabela[f'coef_{p}'] = m.params.reindex(termos)
+    por_periodo = tabela.filter(like='coef_')
+    sinais = np.sign(por_periodo)
+    tabela['mesmo_sinal'] = np.where(sinais.nunique(axis=1) <= 1, 'sim', 'não')
+    return tabela.rename_axis('coeficiente')
 
 
 def cortes_por_ganho(base, variavel, min_faixa=0.005, ganho_minimo=0.0005, max_faixas=15, y='is_canceled'):
