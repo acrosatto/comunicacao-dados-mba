@@ -397,6 +397,102 @@ def preparar_base(hotel):
 
 
 # -----------------------------------------------------------------------------
+# Variáveis do modelo
+# -----------------------------------------------------------------------------
+# Situação de cada variável ao fim do 02_variaveis (seção 3): "entra" ou "candidata"
+# (a candidata depende do teste com as outras variáveis no modelo).
+SITUACAO_VARIAVEIS = {
+    'antecedencia': 'entra', 'noites': 'entra', 'diaria': 'candidata',
+    'sozinho': 'entra', 'duas_criancas': 'entra', 'com_bebe': 'entra',
+    'pedido_especial': 'entra', 'ja_veio': 'entra', 'hotel': 'entra',
+    'segmento': 'entra', 'canal': 'candidata', 'tem_agencia': 'candidata',
+    'paga_empresa': 'entra', 'temporada': 'entra',
+}
+
+
+def montar_variaveis(base):
+    """As variáveis explicativas no formato escolhido no 02_variaveis, seção 3.
+
+    Cada variável sai como categórica, com a referência como primeiro nível: numa
+    fórmula do statsmodels, `C(variavel)` já usa essa referência. Todos os cortes são
+    valores fixos (dias, euros, meses, categorias), sem nada calculado a partir das
+    linhas da base; por isso a mesma função vale para o treino e para o teste.
+
+    Parâmetros
+    ----------
+    base : DataFrame
+        Saída de `preparar_base` (precisa da coluna noites).
+
+    Retorna
+    -------
+    DataFrame com o mesmo índice da base: is_canceled, arrival_date_year e as
+    variáveis de SITUACAO_VARIAVEIS.
+    """
+    def niveis(valores, ordem):
+        return pd.Categorical(valores, categories=ordem)
+
+    def sim_nao(condicao):
+        return niveis(np.where(condicao, 'sim', 'não'), ['não', 'sim'])
+
+    # pd.cut: cada faixa inclui o limite da direita; o -1 serve para incluir o 0
+    antecedencia = pd.cut(base['lead_time'], [-1, 0, 8, 25, np.inf], labels=['0', '1–8', '9–25', 'mais de 25'])
+    noites = pd.cut(base['noites'], [0, 1, 3, np.inf], labels=['1', '2–3', '4 ou mais'])
+    diaria = pd.cut(base['adr'].round(), [-1, 59, np.inf], labels=['até 59', 'mais de 59'])   # diária arredondada para o euro
+    mes = base['arrival_date_month']
+    temporada = np.select([mes.isin(['January', 'March', 'November']), mes.isin(['July', 'August'])],
+                          ['baixa', 'alta'], 'média')
+
+    variaveis = pd.DataFrame({
+        'antecedencia': antecedencia.cat.reorder_categories(['mais de 25', '0', '1–8', '9–25']),
+        'noites': noites.cat.reorder_categories(['2–3', '1', '4 ou mais']),
+        'diaria': diaria.cat.reorder_categories(['mais de 59', 'até 59']),
+        'sozinho': sim_nao(base['adults'] == 1),
+        'duas_criancas': sim_nao(base['children'] >= 2),
+        'com_bebe': sim_nao(base['babies'] > 0),
+        'pedido_especial': niveis(np.where(base['total_of_special_requests'] > 0, 'fez pedido', 'nenhum'),
+                                  ['nenhum', 'fez pedido']),
+        'ja_veio': niveis(np.where(base['previous_bookings_not_canceled'] > 0, 'já veio', 'nunca veio'),
+                          ['nunca veio', 'já veio']),
+        'hotel': niveis(base['hotel'].map({'City Hotel': 'urbano', 'Resort Hotel': 'resort'}), ['urbano', 'resort']),
+        'segmento': niveis(np.where(base['market_segment'].isin(['Online TA', 'Groups']), 'agência online e grupos', 'demais'),
+                           ['agência online e grupos', 'demais']),
+        'canal': niveis(np.where(base['distribution_channel'] == 'TA/TO', 'agência ou operadora', 'demais'),
+                        ['agência ou operadora', 'demais']),
+        'tem_agencia': niveis(np.where(base['agent'].notna(), 'com agência', 'sem agência'),
+                              ['com agência', 'sem agência']),
+        'paga_empresa': niveis(np.where(base['company'].notna(), 'paga por empresa', 'sem empresa'),
+                               ['sem empresa', 'paga por empresa']),
+        'temporada': niveis(temporada, ['média', 'baixa', 'alta']),
+    }, index=base.index)
+    return pd.concat([base[['is_canceled', 'arrival_date_year']], variaveis], axis=1)
+
+
+def resumir_variaveis(variaveis, periodo='arrival_date_year', y='is_canceled'):
+    """Uma linha por nível de cada variável de SITUACAO_VARIAVEIS: situação, se é a
+    referência, reservas, % da base, taxa de cancelamento e taxa em cada período.
+
+    Parâmetros
+    ----------
+    variaveis : DataFrame
+        Saída de `montar_variaveis`.
+
+    Retorna
+    -------
+    DataFrame indexado por variável e nível.
+    """
+    partes = {}
+    for nome, situacao in SITUACAO_VARIAVEIS.items():
+        tabela = taxa_por_nivel(variaveis, nome, y=y)[['n', 'pct_base', 'taxa']]
+        por_periodo = variaveis.groupby([nome, periodo], observed=True)[y].mean().unstack()
+        for p in por_periodo.columns:
+            tabela[f'taxa_{p}'] = por_periodo[p]
+        tabela.insert(0, 'referencia', np.where(tabela.index == variaveis[nome].cat.categories[0], 'sim', ''))
+        tabela.insert(0, 'situacao', situacao)
+        partes[nome] = tabela
+    return pd.concat(partes, names=['variavel', 'nivel'])
+
+
+# -----------------------------------------------------------------------------
 # Exibição das tabelas
 # -----------------------------------------------------------------------------
 def tabela_simples(tabela, casas=4):
