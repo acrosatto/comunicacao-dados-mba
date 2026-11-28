@@ -13,7 +13,7 @@ Uso, a partir de um notebook em analise/<pessoa>/:
 
     import sys
     sys.path.append('..')
-    from funcoes_logistica import aplicar_estilo, resumo_colunas
+    from funcoes import aplicar_estilo, resumo_colunas
 """
 
 import numpy as np
