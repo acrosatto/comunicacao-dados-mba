@@ -804,7 +804,7 @@ def stepwise_com_sinais(base, candidatas, y='is_canceled', criterio='bic', perio
         for termo, linha in invertem.iterrows():
             if dona[termo] == sai:
                 rodadas.append({'rodada': len(rodadas) + 1, 'variavel': sai, 'coeficiente': termo,
-                                **linha.filter(like='coef_').to_dict()})
+                                **linha.filter(regex=r'^(coef|p)_\d').to_dict()})
         candidatas.remove(sai)
     return finais, historico, pd.DataFrame(rodadas)
 
@@ -876,6 +876,110 @@ def taxa_por_bloco(y, prob, passo=0.05):
                          'cancel_acum': acum[1:]}).set_index(['de', 'ate'])
 
 
+def taxa_por_faixa(y, prob, limites, limiar=None):
+    """Taxa real de cancelamento em cada faixa de probabilidade prevista, da faixa mais
+    alta para a mais baixa.
+
+    As faixas vão de 0 a 1, com fronteiras em `limites`. Se houver `limiar` (o ponto de
+    corte), ele vira mais uma fronteira, e as reservas com probabilidade exatamente igual
+    a ele (empatadas) formam uma faixa própria, porque um limiar não as separa.
+
+    Parâmetros
+    ----------
+    y : Series
+        Resposta (0 ou 1).
+    prob : Series
+        Probabilidade prevista, no mesmo índice de `y`.
+    limites : list de float
+        Fronteiras internas das faixas, entre 0 e 1 (por exemplo, [0.1, 0.2, 0.4]).
+    limiar : float, opcional
+        Ponto de corte: liga para as reservas com probabilidade acima dele.
+
+    Retorna
+    -------
+    DataFrame com uma linha por faixa: reservas, parcela (das reservas), de (onde a faixa
+    começa na fila, da mais arriscada para a menos arriscada), prob_media (prevista),
+    taxa (real), empate (a faixa das empatadas no limiar) e liga (faixa acima do limiar).
+    """
+    def num(v):
+        return f'{v * 100:.1f}'.rstrip('0').rstrip('.').replace('.', ',') + '%'
+
+    p = pd.Series(np.asarray(prob), index=y.index).round(10)
+    lim = None if limiar is None else round(limiar, 10)
+    fronteiras = sorted({0.0, 1.0, *limites} | ({lim} if lim is not None else set()), reverse=True)
+    linhas = []
+    for alto, baixo in zip(fronteiras[:-1], fronteiras[1:]):
+        if alto == lim:   # a faixa logo abaixo do limiar exclui as empatadas
+            dentro = (p >= baixo) & (p < alto)
+        elif baixo == lim:   # a faixa logo acima do limiar também exclui as empatadas
+            dentro = (p > baixo) & ((p < alto) if alto < 1 else (p <= alto))
+        else:
+            dentro = (p >= baixo) & ((p < alto) if alto < 1 else (p <= alto))
+        nome = (f'{num(baixo)} ou mais' if alto == 1 else f'menos de {num(alto)}' if baixo == 0
+                else f'{num(baixo)} a {num(alto)}')
+        linhas.append((nome, dentro, False, lim is not None and baixo >= lim))
+        if baixo == lim:
+            linhas.append((f'exatamente {num(lim)}', p == lim, True, False))
+    tabela = pd.DataFrame([{'faixa': nome, 'reservas': int(dentro.sum()), 'parcela': dentro.mean(),
+                            'prob_media': p[dentro].mean(), 'taxa': y[dentro].mean(),
+                            'empate': empate, 'liga': liga} for nome, dentro, empate, liga in linhas])
+    assert tabela['reservas'].sum() == len(y), 'as faixas precisam cobrir todas as reservas'
+    tabela.insert(3, 'de', tabela['parcela'].cumsum() - tabela['parcela'])
+    return tabela.set_index('faixa')
+
+
+def grafico_faixas(tabela, media, rotulo_corte, titulo='', subtitulo=''):
+    """Taxa real de cancelamento por faixa de probabilidade prevista (saída de
+    `taxa_por_faixa`), da faixa mais alta (à esquerda) para a mais baixa.
+
+    A largura de cada barra é a parcela das reservas na faixa; o eixo x é, ao mesmo
+    tempo, a fila das reservas e a probabilidade. As faixas que recebem ligação ficam
+    na cor principal; as outras, em cinza. A linha tracejada é a média, e a pontilhada,
+    o corte (fim das faixas que recebem ligação).
+
+    Parâmetros
+    ----------
+    tabela : DataFrame
+        Saída de `taxa_por_faixa`, com limiar.
+    media : float
+        Taxa média, para a linha de referência.
+    rotulo_corte : str
+        Texto ao lado da linha do corte.
+    """
+    from matplotlib.ticker import PercentFormatter
+    t = tabela.reset_index()
+    centro = t['de'] + t['parcela'] / 2
+    corte = t.loc[t['liga'], 'parcela'].sum()
+    fig, ax = plt.subplots(figsize=(12, 7))
+    ax.bar(centro, t['taxa'], width=t['parcela'] - 0.006,
+           color=[CORES['principal'] if liga else '#c8c8c8' for liga in t['liga']])
+    ax.axhline(media, color=CORES['referencia'], linestyle='--', linewidth=1)
+    ax.annotate(f'média: {media:.1%}'.replace('.', ','), xy=(1, media), xycoords=('axes fraction', 'data'),
+                xytext=(-4, 4), textcoords='offset points', ha='right', va='bottom', fontsize=9, color='#333333')
+    for x, taxa in zip(centro, t['taxa']):
+        ax.annotate(f'{taxa:.1%}'.replace('.', ','), xy=(x, taxa), xytext=(0, 3), textcoords='offset points',
+                    ha='center', va='bottom', fontsize=9, color='#333333')
+    ax.axvline(corte, color='#333333', linestyle=':', linewidth=1)
+    ax.annotate(rotulo_corte, xy=(corte, 0.97), xycoords=('data', 'axes fraction'), xytext=(8, 0),
+                textcoords='offset points', ha='left', va='top', fontsize=9, color='#333333')
+    # nomes das faixas: quebra de linha nas barras estreitas; as empatadas levam a marca
+    rotulos = [nome.replace('exatamente ', 'exatamente\n') + '\n(empatadas)' if empate
+               else nome.replace(' a ', ' a\n').replace(' ou ', ' ou\n') if parcela < 0.1 else nome
+               for nome, empate, parcela in zip(t['faixa'], t['empate'], t['parcela'])]
+    ax.set_xticks(centro, rotulos, fontsize=9)
+    ax.tick_params(axis='x', length=0)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, t['taxa'].max() * 1.2)
+    ax.yaxis.set_major_formatter(PercentFormatter(1, decimals=0))
+    ax.set_xlabel('probabilidade de cancelar prevista pelo modelo (largura da barra = parcela das reservas)')
+    ax.set_ylabel('cancelaram de fato')
+    fig.suptitle(titulo, fontsize=12, y=0.98)
+    if subtitulo:
+        fig.text(0.5, 0.935, subtitulo, ha='center', fontsize=10, color='#666666')
+    fig.subplots_adjust(top=0.88, bottom=0.17)
+    return ax
+
+
 def grafico_ganho(tabela, titulo='', subtitulo='', estilos=None):
     """Curva de ganho: parcela dos eventos encontrados (eixo y) contra a parcela das
     reservas contatadas (eixo x), uma linha por coluna de `curva_ganho`, com a diagonal
@@ -923,10 +1027,12 @@ def calibracao(y, prob, grupos):
     return t
 
 
-def hosmer_lemeshow(y, prob, n_grupos=10):
+def hosmer_lemeshow(y, prob, n_grupos=10, fora_da_amostra=False):
     """Teste de Hosmer-Lemeshow: compara eventos previstos e observados nos grupos de
     risco (`grupos_de_risco`). H0: o modelo está calibrado. Estatística qui-quadrado
-    com (número de grupos − 2) graus de liberdade. Com dezenas de milhares de linhas,
+    com (número de grupos − 2) graus de liberdade na base em que o modelo foi ajustado,
+    e com o número de grupos numa base nova (fora_da_amostra=True), porque ali nenhum
+    parâmetro foi estimado com aqueles dados. Com dezenas de milhares de linhas,
     qualquer desvio pequeno dá p-valor baixo: a tabela de calibração diz se o desvio
     importa.
 
@@ -939,7 +1045,7 @@ def hosmer_lemeshow(y, prob, n_grupos=10):
     previstos = t['prob_media'] * t['reservas']
     observados = t['taxa_real'] * t['reservas']
     estat = (((observados - previstos) ** 2) / (previstos * (1 - t['prob_media']))).sum()
-    gl = len(t) - 2
+    gl = len(t) if fora_da_amostra else len(t) - 2
     return {'estatistica': float(estat), 'gl': gl, 'p_valor': float(chi2.sf(estat, gl))}
 
 
@@ -1025,20 +1131,58 @@ def coeficientes_por_periodo(base, formula, variaveis, periodo='arrival_date_yea
 
     Retorna
     -------
-    DataFrame com uma linha por coeficiente: coef e p-valor no treino todo, o coef em
-    cada período e mesmo_sinal (sim ou não). Um nível sem dados num período fica em
-    branco nesse período e de fora da conferência.
+    DataFrame com uma linha por coeficiente: coef e p-valor no treino todo, o coef e
+    o p-valor em cada período e mesmo_sinal (sim ou não). Um nível sem nenhuma
+    reserva num período fica em branco nesse período e de fora da conferência (sem
+    isso, o ajuste daria 0 para ele, e a conferência marcaria "não").
     """
+    def presente(termo, dados):
+        # o termo tem dados no período? (cada parte 'variavel[T.nivel]' precisa de pelo menos uma reserva)
+        for parte in termo.split(':'):
+            if '[T.' in parte:
+                v, nivel = parte.split('[T.')
+                if not (dados[v].astype(str) == nivel.rstrip(']')).any():
+                    return False
+        return True
+
     todos = ajustar_logistica(formula, base)
     termos = [t for t in todos.params.index if any(t == v or t.startswith(f'{v}[') for v in variaveis)]
     tabela = pd.DataFrame({'coef': todos.params[termos], 'p_valor': todos.pvalues[termos]})
     for p, dados in base.groupby(periodo):
         m = ajustar_logistica(formula, dados)
-        tabela[f'coef_{p}'] = m.params.reindex(termos)
-    por_periodo = tabela.filter(like='coef_')
-    sinais = np.sign(por_periodo)
+        com_dados = [t for t in termos if presente(t, dados)]
+        tabela[f'coef_{p}'] = m.params.reindex(com_dados).reindex(termos)
+        tabela[f'p_{p}'] = m.pvalues.reindex(com_dados).reindex(termos)
+    sinais = np.sign(tabela.filter(like='coef_'))
     tabela['mesmo_sinal'] = np.where(sinais.nunique(axis=1) <= 1, 'sim', 'não')
-    return tabela.rename_axis('coeficiente')
+    ordem = ['coef', 'p_valor'] + [c for c in tabela.columns if c.startswith('coef_')]         + [c for c in tabela.columns if c.startswith('p_') and c != 'p_valor'] + ['mesmo_sinal']
+    return tabela[ordem].rename_axis('coeficiente')
+
+
+def sentido_dos_efeitos(base, modelo, variaveis, y='is_canceled'):
+    """Compara o sentido de cada coeficiente do modelo com o da comparação direta: a
+    taxa do nível contra a taxa da referência, sem as outras variáveis.
+
+    Um coeficiente com sentido contrário ao da comparação direta diz, por exemplo, que
+    "sem agência cancela mais" quando, nos dados, sem agência cancela menos. Esse efeito
+    existe só depois de descontar as outras variáveis ao mesmo tempo e não se explica
+    para quem vai usar o modelo.
+
+    Retorna
+    -------
+    DataFrame com uma linha por coeficiente: coef, taxa_nivel, taxa_referencia e
+    mesmo_sentido (sim ou não).
+    """
+    linhas = {}
+    for termo, coef in modelo.params.drop('Intercept').items():
+        v = next(v for v in variaveis if termo.startswith(f'{v}['))
+        nivel = termo.split('[T.')[1].rstrip(']')
+        referencia = base[v].cat.categories[0]
+        taxa_nivel = base.loc[base[v] == nivel, y].mean()
+        taxa_ref = base.loc[base[v] == referencia, y].mean()
+        linhas[termo] = {'coef': coef, 'taxa_nivel': taxa_nivel, 'taxa_referencia': taxa_ref,
+                         'mesmo_sentido': 'sim' if np.sign(coef) == np.sign(taxa_nivel - taxa_ref) else 'não'}
+    return pd.DataFrame(linhas).T.astype({'coef': float, 'taxa_nivel': float, 'taxa_referencia': float}).rename_axis('coeficiente')
 
 
 def cortes_por_ganho(base, variavel, min_faixa=0.005, ganho_minimo=0.0005, max_faixas=15, y='is_canceled'):
