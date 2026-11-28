@@ -45,7 +45,7 @@ Decisões de escopo e limpeza em que os notebooks da Ana (`01_exploratoria.ipynb
 
 | Ponto | Ana | Notebooks do grupo | Situação |
 | --- | --- | --- | --- |
-| Alta de 2017 | Sai do notebook 02: a decomposição usava o cancelamento do teste. Fica para o `03_modelo`, depois da avaliação | Notebook 03: "a alta é sobretudo comportamento, concentrada na agência online com antecedência longa", analisada antes do modelo | diferente: o grupo usa o teste antes do modelo |
+| Alta de 2017 | Sai do notebook 02: a decomposição usava o cancelamento do teste. Fica para o `04_modelo`, depois da avaliação | Notebook 03: "a alta é sobretudo comportamento, concentrada na agência online com antecedência longa", analisada antes do modelo | diferente: o grupo usa o teste antes do modelo |
 
 ## Para fechar com o grupo
 
