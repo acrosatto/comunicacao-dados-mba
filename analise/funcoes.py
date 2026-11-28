@@ -349,6 +349,66 @@ def v_cramer(base, variavel, y='is_canceled'):
     return float(np.sqrt(qui2 / (tabela.values.sum() * (min(tabela.shape) - 1))))
 
 
+def v_cramer_pares(base, variaveis):
+    """V de Cramér entre cada par de variáveis categóricas.
+
+    Parâmetros
+    ----------
+    base : DataFrame
+    variaveis : list de str
+
+    Retorna
+    -------
+    matriz : DataFrame quadrado (variáveis × variáveis), com 1 na diagonal.
+    """
+    matriz = pd.DataFrame(1.0, index=variaveis, columns=variaveis)
+    for i, a in enumerate(variaveis):
+        for b in variaveis[i + 1:]:
+            matriz.loc[a, b] = matriz.loc[b, a] = v_cramer(base, a, y=b)
+    return matriz
+
+
+def grafico_v_cramer(matriz, titulo='', subtitulo='', nomes=None):
+    """Mapa de calor do V de Cramér entre pares: só o triângulo de baixo, com o valor
+    escrito em cada casa. Uma cor só, do claro (associação fraca) ao escuro (forte).
+
+    Parâmetros
+    ----------
+    matriz : DataFrame
+        Saída de `v_cramer_pares`.
+    titulo, subtitulo : str
+        O subtítulo sai em cinza, logo abaixo do título.
+    nomes : dict, opcional
+        Nome de exibição de cada variável.
+    """
+    from matplotlib.colors import LinearSegmentedColormap
+    rotulos = [nomes.get(v, v) if nomes else v for v in matriz.index]
+    n = len(matriz)
+    valores = matriz.to_numpy().copy()
+    valores[np.triu_indices(n)] = np.nan              # só os pares abaixo da diagonal
+    cores = LinearSegmentedColormap.from_list('v', ['#f4f6fb', CORES['principal']])
+
+    fig, ax = plt.subplots(figsize=(12, 9))
+    ax.imshow(valores, cmap=cores, vmin=0, vmax=1)
+    ax.grid(False)
+    for i in range(n):
+        for j in range(i):
+            v = valores[i, j]
+            ax.text(j, i, f'{v:.2f}'.replace('.', ','), ha='center', va='center', fontsize=9,
+                    color='white' if v > 0.5 else '#333333')
+    ax.set_xticks(range(n - 1), rotulos[:-1], rotation=45, ha='right')
+    ax.set_yticks(range(1, n), rotulos[1:])
+    ax.set_xlim(-0.5, n - 1.5)
+    ax.set_ylim(n - 0.5, 0.5)
+    for lado in ax.spines.values():
+        lado.set_visible(False)
+    ax.tick_params(length=0)
+    fig.suptitle(titulo, fontsize=12, x=0.5, y=0.98)
+    if subtitulo:
+        fig.text(0.5, 0.94, subtitulo, ha='center', fontsize=10, color='#666666')
+    return ax
+
+
 # -----------------------------------------------------------------------------
 # Base do modelo
 # -----------------------------------------------------------------------------
@@ -407,6 +467,15 @@ SITUACAO_VARIAVEIS = {
     'pedido_especial': 'entra', 'ja_veio': 'entra', 'hotel': 'entra',
     'segmento': 'entra', 'canal': 'candidata', 'tem_agencia': 'candidata',
     'paga_empresa': 'entra', 'temporada': 'entra',
+}
+
+# Nome de cada variável nos gráficos e nas tabelas para leitura.
+NOMES_VARIAVEIS = {
+    'antecedencia': 'antecedência', 'noites': 'noites', 'diaria': 'diária',
+    'sozinho': 'sozinho', 'duas_criancas': '2 ou mais crianças', 'com_bebe': 'com bebê',
+    'pedido_especial': 'pedido especial', 'ja_veio': 'já veio', 'hotel': 'hotel',
+    'segmento': 'segmento', 'canal': 'canal', 'tem_agencia': 'tem agência',
+    'paga_empresa': 'paga por empresa', 'temporada': 'temporada',
 }
 
 
