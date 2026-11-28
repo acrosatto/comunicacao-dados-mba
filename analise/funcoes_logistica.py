@@ -611,6 +611,8 @@ def conferir_cortes_por_periodo(base, variavel, passos, periodo='arrival_date_ye
     aceitos = passos[passos['aceito'] == 'sim']
     ganho = {int(c): g for c, g in zip(aceitos['corte_novo'], aceitos['ganho'])}
     cortes, tabelas, saidas = sorted(ganho), {}, []
+    if not cortes:
+        return [], pd.DataFrame(), ['A árvore não aceitou nenhum corte: não há o que conferir.']
     minimo = int(base[variavel].min())
 
     def nomes(cortes):
